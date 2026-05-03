@@ -600,11 +600,6 @@ bool Effect::LoadFXFile()
 	// Populate available techniques for UI selection
 	availableTechniques = GetBaseTechniqueNames();
 
-	// Set default selected technique to first annotated technique
-	if (!uiTechniques.empty()) {
-		selectedTechniqueIndex = 0;  // Default to first annotated technique
-	}
-
 	LoadUIVariables();
 	ENBExtender::RecoverGroupsFromINI(*this, enbseriesPath);
 
@@ -935,7 +930,8 @@ void Effect::LoadUITechniques()
 
 	ENBExtender::LoadTechniqueDropdownMetadata(*this);
 
-	ForEachTechniqueSequence(effect.get(), [this](ID3DX11EffectTechnique* technique, const std::string& baseName, [[maybe_unused]] const std::string& techniqueName, [[maybe_unused]] int sequenceNumber) {
+	uint32_t defaultIndex = 0;
+	ForEachTechniqueSequence(effect.get(), [this, &defaultIndex](ID3DX11EffectTechnique* technique, const std::string& baseName, [[maybe_unused]] const std::string& techniqueName, [[maybe_unused]] int sequenceNumber) {
 		std::string uiName = GetUINameFromTechnique(technique);
 		if (uiName.empty())
 			return;
@@ -945,12 +941,18 @@ void Effect::LoadUITechniques()
 				return;
 		}
 
+		std::string isDefault = GetTechniqueAnnotation(technique, "UIDefault");
+		if (!isDefault.empty() && isDefault != "0" && isDefault != "false")
+			defaultIndex = static_cast<uint32_t>(uiTechniques.size());
+
 		UITechnique uiTech;
 		uiTech.techniqueName = baseName;
 		uiTech.displayName = uiName;
 		uiTechniques.push_back(uiTech);
-
 	});
+
+	if (defaultIndex < uiTechniques.size())
+		selectedTechniqueIndex = defaultIndex;
 }
 
 std::string Effect::GetTechniqueAnnotation(ID3DX11EffectTechnique* technique, const std::string& annotationName)
