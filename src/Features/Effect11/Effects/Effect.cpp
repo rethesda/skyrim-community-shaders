@@ -338,10 +338,12 @@ bool Effect::Apply()
 		return false;
 	}
 
-	if (!Load()) {
-		errors.push_back("Failed to load settings");
-		logger::error("[ENBPP] Failed to load settings for effect '{}'", GetName());
-		return false;
+	if (!isKIEFX) {
+		if (!Load()) {
+			errors.push_back("Failed to load settings");
+			logger::error("[ENBPP] Failed to load settings for effect '{}'", GetName());
+			return false;
+		}
 	}
 
 	CreateEffectTextures();
@@ -364,6 +366,8 @@ void Effect::Unload()
 	groupMeta.clear();
 	techniqueDropdown = {};
 	sourceGroupMap.clear();
+	sourceOrderMap.clear();
+	preprocessedSource.clear();
 
 	ClearVariableCache();
 
@@ -439,6 +443,7 @@ bool Effect::LoadFXFile()
 		auto pp = preprocess(source, include);
 		if (pp.empty())
 			return false;
+		preprocessedSource = pp;
 		ENBExtender::ParseSourceGroupScopes(pp, *this);
 		StripLineDirectives(pp);
 		ENBExtender::ConvertFxGroups(pp);
@@ -490,7 +495,11 @@ bool Effect::LoadFXFile()
 	SetupCustomTextures();
 	LoadTechniques();
 	LoadUITechniques();
-	LoadUIVariables();
+
+	if (!isKIEFX) {
+		LoadUIVariables();
+		preprocessedSource.clear();
+	}
 
 	logger::info("[ENBPP] Successfully loaded FX file: {}", filePathStr);
 	return true;

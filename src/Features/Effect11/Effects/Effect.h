@@ -167,6 +167,9 @@ public:
 	// Source declaration order (variable name → declaration index)
 	std::unordered_map<std::string, int> sourceOrderMap;
 
+	// Stored preprocessed source for unified KIEFX parsing (cleared after use)
+	std::string preprocessedSource;
+
 	struct UIDefineInfo
 	{
 		std::string defineName;

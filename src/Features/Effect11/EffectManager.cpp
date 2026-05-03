@@ -67,6 +67,34 @@ void EffectManager::Apply()
 	enbAdaptation.Apply();
 	enbEffect.Apply();
 	enbEffectPostPass.Apply();
+
+	Effect* allEffects[] = { &enbBloom, &enbLens, &enbAdaptation, &enbEffect, &enbEffectPostPass };
+	std::vector<Effect*> kiefxEffects;
+	std::string concatenatedSource;
+	for (auto* effect : allEffects) {
+		if (effect->isKIEFX && effect->IsCompiled()) {
+			kiefxEffects.push_back(effect);
+			concatenatedSource += effect->preprocessedSource;
+			concatenatedSource += "\n";
+		}
+	}
+
+	if (!kiefxEffects.empty() && !concatenatedSource.empty()) {
+		auto* primary = kiefxEffects[0];
+		ENBExtender::ParseSourceGroupScopes(concatenatedSource, *primary);
+
+		for (size_t i = 1; i < kiefxEffects.size(); ++i) {
+			kiefxEffects[i]->sourceGroupMap = primary->sourceGroupMap;
+			kiefxEffects[i]->sourceOrderMap = primary->sourceOrderMap;
+			kiefxEffects[i]->groupMeta = primary->groupMeta;
+		}
+
+		for (auto* effect : kiefxEffects) {
+			effect->LoadUIVariables();
+			effect->Load();
+			effect->preprocessedSource.clear();
+		}
+	}
 }
 
 void EffectManager::Load()
