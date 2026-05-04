@@ -142,47 +142,6 @@ namespace ENBExtender
 		return decoded;
 	}
 
-	// Text parsing
-
-	static size_t FindMatchingBrace(const std::string& text, size_t openPos)
-	{
-		int depth = 1;
-		bool inLineComment = false, inBlockComment = false, inString = false;
-		for (size_t i = openPos + 1; i < text.size(); ++i) {
-			char c = text[i], next = (i + 1 < text.size()) ? text[i + 1] : '\0';
-			if (inLineComment) { if (c == '\n') inLineComment = false; continue; }
-			if (inBlockComment) { if (c == '*' && next == '/') { inBlockComment = false; ++i; } continue; }
-			if (inString) { if (c == '\\') ++i; else if (c == '"') inString = false; continue; }
-			if (c == '/' && next == '/') { inLineComment = true; ++i; continue; }
-			if (c == '/' && next == '*') { inBlockComment = true; ++i; continue; }
-			if (c == '"') { inString = true; continue; }
-			if (c == '{') ++depth;
-			else if (c == '}' && --depth == 0) return i;
-		}
-		return std::string::npos;
-	}
-
-	static size_t FindMatchingAngleBracket(const std::string& text, size_t openPos)
-	{
-		int depth = 1;
-		for (size_t i = openPos + 1; i < text.size(); ++i) {
-			if (text[i] == '<') ++depth;
-			else if (text[i] == '>' && --depth == 0) return i;
-		}
-		return std::string::npos;
-	}
-
-	static std::pair<std::string, size_t> ParseAngleBrackets(const std::string& text, size_t from)
-	{
-		size_t open = text.find_first_not_of(" \t\r\n", from);
-		if (open == std::string::npos || text[open] != '<')
-			return { {}, std::string::npos };
-		size_t close = FindMatchingAngleBracket(text, open);
-		if (close == std::string::npos)
-			return { {}, std::string::npos };
-		return { text.substr(open + 1, close - open - 1), close };
-	}
-
 	static std::string ExtractAnnotation(const std::string& annotations, const std::string& name)
 	{
 		for (size_t pos = 0;;) {
@@ -210,132 +169,6 @@ namespace ENBExtender
 			Trim(val);
 			return val;
 		}
-	}
-
-	static bool IsWordBoundary(const std::string& text, size_t pos)
-	{
-		return pos == 0 || !IsIdentChar(text[pos - 1]);
-	}
-
-	static bool IsOnPreprocessorLine(const std::string& content, size_t pos)
-	{
-		size_t lineStart = content.rfind('\n', pos);
-		lineStart = (lineStart == std::string::npos) ? 0 : lineStart + 1;
-		size_t firstChar = content.find_first_not_of(" \t", lineStart);
-		return firstChar != std::string::npos && content[firstChar] == '#';
-	}
-
-	// ConvertFxGroups
-
-	struct ParsedBlock
-	{
-		std::string annotations;
-		std::string body;
-		size_t endPos = std::string::npos;
-	};
-
-	static ParsedBlock ParseKeywordBlock(const std::string& text, size_t afterKeyword)
-	{
-		size_t pos = text.find_first_not_of(" \t\r\n", afterKeyword);
-		if (pos == std::string::npos)
-			return {};
-		ParsedBlock result;
-		if (text[pos] != '<' && text[pos] != '{') {
-			pos = text.find_first_of("<{", pos);
-			if (pos == std::string::npos)
-				return {};
-		}
-		if (text[pos] == '<') {
-			auto [anno, closePos] = ParseAngleBrackets(text, pos);
-			if (closePos == std::string::npos)
-				return {};
-			result.annotations = anno;
-			pos = text.find_first_not_of(" \t\r\n", closePos + 1);
-			if (pos == std::string::npos)
-				return {};
-		}
-		if (text[pos] != '{')
-			pos = text.find('{', pos);
-		if (pos == std::string::npos)
-			return {};
-		size_t closePos = FindMatchingBrace(text, pos);
-		if (closePos == std::string::npos)
-			return {};
-		result.body = text.substr(pos, closePos - pos + 1);
-		result.endPos = closePos;
-		return result;
-	}
-
-	void ConvertFxGroups(std::string& content)
-	{
-		int convertedCount = 0;
-		size_t searchStart = 0;
-
-		while (true) {
-			size_t fxPos = content.find("fxgroup", searchStart);
-			if (fxPos == std::string::npos)
-				break;
-			searchStart = fxPos + 7;
-
-			if (!IsWordBoundary(content, fxPos) || IsOnPreprocessorLine(content, fxPos))
-				continue;
-
-			size_t nameStart = content.find_first_not_of(" \t", fxPos + 7);
-			if (nameStart == std::string::npos)
-				continue;
-			size_t nameEnd = content.find_first_of(" \t<{", nameStart);
-			if (nameEnd == std::string::npos)
-				continue;
-			std::string groupName = content.substr(nameStart, nameEnd - nameStart);
-
-			std::string groupAnnotations;
-			size_t bodySearchFrom = nameEnd;
-			auto [ga, gaClose] = ParseAngleBrackets(content, nameEnd);
-			if (gaClose != std::string::npos) {
-				groupAnnotations = ga;
-				bodySearchFrom = gaClose + 1;
-			}
-
-			size_t bodyOpen = content.find('{', bodySearchFrom);
-			if (bodyOpen == std::string::npos)
-				continue;
-			size_t bodyClose = FindMatchingBrace(content, bodyOpen);
-			if (bodyClose == std::string::npos)
-				continue;
-
-			std::string body = content.substr(bodyOpen + 1, bodyClose - bodyOpen - 1);
-
-			std::vector<ParsedBlock> techniques;
-			for (size_t ts = 0;;) {
-				size_t tp = body.find("technique11", ts);
-				if (tp == std::string::npos)
-					break;
-				if (!IsWordBoundary(body, tp)) { ts = tp + 11; continue; }
-				auto parsed = ParseKeywordBlock(body, tp + 11);
-				if (parsed.endPos == std::string::npos) { ts = tp + 11; continue; }
-				ts = parsed.endPos + 1;
-				techniques.push_back(std::move(parsed));
-			}
-
-			std::string replacement;
-			for (size_t i = 0; i < techniques.size(); ++i) {
-				std::string techName = groupName + (i > 0 ? std::to_string(i) : "");
-				std::string anno = (i == 0 && !groupAnnotations.empty())
-				                       ? groupAnnotations + (techniques[i].annotations.empty() ? "" : " " + techniques[i].annotations)
-				                       : techniques[i].annotations;
-				replacement += "technique11 " + techName;
-				if (!anno.empty())
-					replacement += " <" + anno + ">";
-				replacement += " " + techniques[i].body + "\n";
-			}
-
-			convertedCount++;
-			content.replace(fxPos, bodyClose - fxPos + 1, replacement);
-			searchStart = fxPos + replacement.size();
-		}
-
-		if (convertedCount > 0)
-			logger::debug("[ENBExtender] Converted {} fxgroup(s)", convertedCount);
 	}
 
 	// ConvertExtenderSyntax
@@ -774,7 +607,7 @@ namespace ENBExtender
 			uiVar.displayName = def.displayName;
 			uiVar.group = def.group;
 			uiVar.ordering = def.ordering;
-			uiVar.isReadOnly = true;
+			uiVar.isDefine = true;
 
 			if (def.type == "bool") {
 				uiVar.type = Effect::UIVariableType::Bool;
@@ -1323,13 +1156,32 @@ namespace ENBExtender
 		if (!fx)
 			return;
 		D3DX11_EFFECT_DESC effectDesc;
-		if (FAILED(fx->GetDesc(&effectDesc)) || effectDesc.Techniques == 0)
-			return;
-		auto* tech = fx->GetTechniqueByIndex(0);
-		if (!tech || !tech->IsValid())
+		if (FAILED(fx->GetDesc(&effectDesc)))
 			return;
 
-		auto get = [&](const char* name) { return Effect::GetTechniqueAnnotation(tech, name); };
+		// Try named groups first (fxgroup annotations), fall back to first technique
+		std::function<std::string(const char*)> get;
+
+		for (UINT g = 0; g < effectDesc.Groups; ++g) {
+			auto* group = fx->GetGroupByIndex(g);
+			if (!group || !group->IsValid())
+				continue;
+			D3DX11_GROUP_DESC groupDesc;
+			if (FAILED(group->GetDesc(&groupDesc)) || !groupDesc.Name)
+				continue;
+			get = [group](const char* name) { return Effect::GetGroupAnnotation(group, name); };
+			break;
+		}
+
+		if (!get) {
+			if (effectDesc.Techniques == 0)
+				return;
+			auto* tech = fx->GetTechniqueByIndex(0);
+			if (!tech || !tech->IsValid())
+				return;
+			get = [tech](const char* name) { return Effect::GetTechniqueAnnotation(tech, name); };
+		}
+
 		auto str = [&](const char* name, std::string& out) { auto s = get(name); if (!s.empty()) out = s; };
 		auto flag = [&](const char* name, bool& out) { auto s = get(name); if (!s.empty()) out = IsTruthy(s); };
 
