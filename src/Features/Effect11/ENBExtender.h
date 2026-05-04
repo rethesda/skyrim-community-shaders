@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <span>
 #include <string>
 #include <vector>
@@ -17,7 +18,7 @@ namespace ENBExtender
 	std::string DecodeKIEFX(const std::string& content);
 
 	// Source preprocessing
-	void ConvertExtenderSyntax(std::string& content, std::vector<Effect::UIDefineInfo>& uiDefines, const std::string& iniPath = "", const std::string& iniSection = "");
+	void ConvertExtenderSyntax(std::string& content, const std::filesystem::path& enbseriesPath, std::vector<Effect::UIDefineInfo>& uiDefines, const std::string& iniPath = "", const std::string& iniSection = "");
 
 	// UI variable processing
 	void ParseSourceGroupScopes(const std::string& preprocessedSource, Effect& effect);
