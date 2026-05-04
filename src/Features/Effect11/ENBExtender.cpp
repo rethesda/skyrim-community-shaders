@@ -563,7 +563,7 @@ namespace ENBExtender
 
 	// Group metadata tracking
 
-	static void TrackGroupMeta(const std::string& groupPath, ID3DX11EffectVariable* variable, Effect& effect)
+	static void CollectGroupMeta(const std::string& groupPath, ID3DX11EffectVariable* variable, Effect& effect)
 	{
 		if (groupPath.empty())
 			return;
@@ -585,6 +585,11 @@ namespace ENBExtender
 				gm.ordering = SafeStoi(s);
 				gm.hasOrdering = true;
 			}
+		}
+		if (!gm.isTopLevel) {
+			auto s = get("UITopLevel");
+			if (!s.empty())
+				gm.isTopLevel = IsTruthy(s);
 		}
 	}
 
@@ -616,13 +621,14 @@ namespace ENBExtender
 		uiVar.uiBindingProperty = get("UIBindingProperty");
 		uiVar.uiBindingCondition = get("UIBindingCondition");
 		uiVar.ignorePerfMode = IsTruthy(get("UIIgnorePerfMode"));
+		uiVar.isWeatherString = IsTruthy(get("UIWeatherString"));
 		uiVar.isWeatherOnlyString = IsTruthy(get("UIWeatherOnlyString"));
 		uiVar.separation = get("Separation");
 
-		TrackGroupMeta(uiVar.group, variable, effect);
+		CollectGroupMeta(uiVar.group, variable, effect);
 	}
 
-	static void ParseTimePeriodInternal(Effect::UIVariable& uiVar)
+	static void ParseTimePeriod(Effect::UIVariable& uiVar)
 	{
 		if (uiVar.separation.empty() || uiVar.separation == "None")
 			return;
@@ -662,7 +668,8 @@ namespace ENBExtender
 			default: return false;
 			}
 		} else if (typeDesc.Class == D3D_SVC_VECTOR && typeDesc.Type == D3D_SVT_FLOAT && typeDesc.Elements == 0) {
-			if (typeDesc.Columns == 3) out.type = Effect::UIVariableType::Color3;
+			if (typeDesc.Columns == 2) out.type = Effect::UIVariableType::Float2;
+			else if (typeDesc.Columns == 3) out.type = Effect::UIVariableType::Color3;
 			else if (typeDesc.Columns == 4) out.type = Effect::UIVariableType::Color4;
 			else return false;
 		} else {
@@ -671,7 +678,7 @@ namespace ENBExtender
 
 		out.widgetType = ParseWidgetType(get("UIWidget"));
 
-		if (out.type == Effect::UIVariableType::Float) {
+		if (out.type == Effect::UIVariableType::Float || out.type == Effect::UIVariableType::Float2) {
 			auto s = get("UIMin"); if (!s.empty()) out.floatMin = SafeStof(s, out.floatMin);
 			s = get("UIMax"); if (!s.empty()) out.floatMax = SafeStof(s, out.floatMax);
 			s = get("UIStep"); if (!s.empty()) out.floatStep = SafeStof(s, out.floatStep);
@@ -691,7 +698,7 @@ namespace ENBExtender
 		if (out.isHidden)
 			return false;
 
-		ParseTimePeriodInternal(out);
+		ParseTimePeriod(out);
 		return true;
 	}
 
@@ -708,7 +715,7 @@ namespace ENBExtender
 				groupName = GetStringVariableValue(variable);
 			if (!groupName.empty()) {
 				groupStack.push_back(groupName);
-				TrackGroupMeta(BuildGroupPath(groupStack), variable, effect);
+				CollectGroupMeta(BuildGroupPath(groupStack), variable, effect);
 			}
 			return true;
 		}
@@ -904,7 +911,7 @@ namespace ENBExtender
 
 	using GroupMetaMap = std::unordered_map<std::string, Effect::GroupMeta>;
 
-	static GroupNode* TraverseGroupPath(GroupNode& root, const std::string& groupPath)
+	static GroupNode* TraverseGroupPath(GroupNode& root, const std::string& groupPath, const GroupMetaMap& meta = {})
 	{
 		GroupNode* node = &root;
 		size_t start = 0;
@@ -912,7 +919,11 @@ namespace ENBExtender
 			size_t dot = groupPath.find('.', start);
 			if (dot == std::string::npos)
 				dot = groupPath.size();
-			node = FindOrCreateChild(*node, groupPath.substr(start, dot - start), groupPath.substr(0, dot));
+			std::string fullPath = groupPath.substr(0, dot);
+			auto metaIt = meta.find(fullPath);
+			if (metaIt != meta.end() && metaIt->second.isTopLevel)
+				node = &root;
+			node = FindOrCreateChild(*node, groupPath.substr(start, dot - start), fullPath);
 			start = dot + 1;
 		}
 		return node;
@@ -939,6 +950,8 @@ namespace ENBExtender
 						it->second.ordering = gm.ordering;
 						it->second.hasOrdering = true;
 					}
+					if (!it->second.isTopLevel && gm.isTopLevel)
+						it->second.isTopLevel = true;
 				}
 			}
 
@@ -955,7 +968,7 @@ namespace ENBExtender
 					fileMap[uname] = { effect, i };
 				}
 
-				GroupNode* node = (!var.isTopLevel && !var.group.empty()) ? TraverseGroupPath(root, var.group) : &root;
+				GroupNode* node = (!var.isTopLevel && !var.group.empty()) ? TraverseGroupPath(root, var.group, meta) : &root;
 
 				if (var.isSeparator) {
 					if (seenSepOrders[node].insert(var.sourceOrder).second)
@@ -1087,6 +1100,9 @@ namespace ENBExtender
 		case Effect::UIVariableType::Bool:
 			changed = ImGui::Checkbox(id.c_str(), &uiVar.boolValue);
 			break;
+		case Effect::UIVariableType::Float2:
+			changed = ImGui::SliderFloat2(id.c_str(), uiVar.colorValue, uiVar.floatMin, uiVar.floatMax, "%.3f");
+			break;
 		case Effect::UIVariableType::Color3:
 			changed = (uiVar.widgetType == Effect::UIWidgetType::Vector)
 			              ? ImGui::SliderFloat3(id.c_str(), uiVar.colorValue, -1.0f, 1.0f, "%.3f")
@@ -1147,7 +1163,7 @@ namespace ENBExtender
 		}
 	}
 
-	static void RenderTechDropdown(Effect* effect, std::unordered_set<Effect*>& changedEffects)
+	static void RenderTechniqueDropdown(Effect* effect, std::unordered_set<Effect*>& changedEffects)
 	{
 		ImGui::Text("%s", effect->techniqueDropdown.name.c_str());
 		ImGui::SameLine();
@@ -1171,7 +1187,7 @@ namespace ENBExtender
 	{
 		for (auto& [effect, group] : techDropdowns)
 			if (!group.empty() && group == node.fullPath)
-				RenderTechDropdown(effect, ctx.changedEffects);
+				RenderTechniqueDropdown(effect, ctx.changedEffects);
 
 		int firstChildMinSO = INT_MAX;
 		for (auto& child : node.children) {
@@ -1262,7 +1278,7 @@ namespace ENBExtender
 					it->second.ordering = effect->techniqueDropdown.ordering;
 					it->second.hasOrdering = true;
 				}
-				TraverseGroupPath(root, effect->techniqueDropdown.group);
+				TraverseGroupPath(root, effect->techniqueDropdown.group, meta);
 			}
 		}
 
@@ -1275,7 +1291,7 @@ namespace ENBExtender
 
 		for (auto& [effect, group] : techDropdowns)
 			if (effect->techniqueDropdown.topLevel || group.empty())
-				RenderTechDropdown(effect, changedEffects);
+				RenderTechniqueDropdown(effect, changedEffects);
 
 		RenderGroupNode(root, ctx, techDropdowns);
 
@@ -1314,21 +1330,19 @@ namespace ENBExtender
 			return;
 
 		auto get = [&](const char* name) { return Effect::GetTechniqueAnnotation(tech, name); };
+		auto str = [&](const char* name, std::string& out) { auto s = get(name); if (!s.empty()) out = s; };
+		auto flag = [&](const char* name, bool& out) { auto s = get(name); if (!s.empty()) out = IsTruthy(s); };
+
 		auto& td = effect.techniqueDropdown;
-		auto s = get("UIDropdownName");
-		if (!s.empty()) td.name = s;
-		s = get("UIDropdownGroup");
-		if (!s.empty()) td.group = s;
-		s = get("UIDropdownGroupName");
-		if (!s.empty()) td.groupName = s;
-		s = get("UIDropdownGroupOpen");
-		if (!s.empty()) td.groupOpen = IsTruthy(s);
-		s = get("UIDropdownVisible");
-		if (!s.empty()) td.visible = IsTruthy(s);
-		s = get("UIDropdownTopLevel");
-		if (!s.empty()) td.topLevel = IsTruthy(s);
-		s = get("UIDropdownOrdering");
-		if (!s.empty()) td.ordering = SafeStoi(s, td.ordering);
+		str("UIDropdownName", td.name);
+		str("UIDropdownGroup", td.group);
+		str("UIDropdownGroupName", td.groupName);
+		flag("UIDropdownGroupOpen", td.groupOpen);
+		flag("UIDropdownVisible", td.visible);
+		flag("UIDropdownTopLevel", td.topLevel);
+		auto s = get("UIDropdownOrdering");
+		if (!s.empty())
+			td.ordering = SafeStoi(s, td.ordering);
 	}
 
 	// Time-of-day interpolation
@@ -1398,7 +1412,7 @@ namespace ENBExtender
 					result += effect.uiVariables[e.index].floatValue * (e.weight / totalWeight);
 				baseVar->AsScalar()->SetFloat(result);
 			} else {
-				int comps = (firstVar.type == Effect::UIVariableType::Color3) ? 3 : 4;
+				int comps = (firstVar.type == Effect::UIVariableType::Float2) ? 2 : (firstVar.type == Effect::UIVariableType::Color3) ? 3 : 4;
 				float result[4] = {};
 				for (auto& e : entries) {
 					float w = e.weight / totalWeight;

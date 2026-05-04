@@ -293,11 +293,12 @@ void Effect::Save()
 		case UIVariableType::Bool:
 			value = uiVar.boolValue ? "true" : "false";
 			break;
+		case UIVariableType::Float2:
 		case UIVariableType::Color3:
 		case UIVariableType::Color4:
 			{
 				std::ostringstream oss;
-				int numComponents = (uiVar.type == UIVariableType::Color3) ? 3 : 4;
+				int numComponents = (uiVar.type == UIVariableType::Float2) ? 2 : (uiVar.type == UIVariableType::Color3) ? 3 : 4;
 
 				std::copy(uiVar.colorValue, uiVar.colorValue + numComponents - 1,
 					std::ostream_iterator<float>(oss, ", "));
@@ -940,6 +941,7 @@ void Effect::LoadUIVariableValue(UIVariable& uiVar)
 	case UIVariableType::Bool:
 		uiVar.effectVariable->AsScalar()->GetBool(&uiVar.boolValue);
 		break;
+	case UIVariableType::Float2:
 	case UIVariableType::Color3:
 	case UIVariableType::Color4:
 		uiVar.effectVariable->AsVector()->GetFloatVector(uiVar.colorValue);
@@ -972,11 +974,12 @@ void Effect::LoadVariableFromString(UIVariable& uiVar, const std::string& value)
 				uiVar.effectVariable->AsScalar()->SetBool(uiVar.boolValue);
 			}
 			break;
+		case UIVariableType::Float2:
 		case UIVariableType::Color3:
 		case UIVariableType::Color4:
 			{
 				std::istringstream ss(value);
-				int numComponents = (uiVar.type == UIVariableType::Color3) ? 3 : 4;
+				int numComponents = (uiVar.type == UIVariableType::Float2) ? 2 : (uiVar.type == UIVariableType::Color3) ? 3 : 4;
 				for (int i = 0; i < numComponents; ++i) {
 					char sep;
 					ss >> uiVar.colorValue[i];
@@ -1008,6 +1011,7 @@ void Effect::UpdateUIVariables()
 		case UIVariableType::Bool:
 			uiVar.effectVariable->AsScalar()->SetBool(uiVar.boolValue);
 			break;
+		case UIVariableType::Float2:
 		case UIVariableType::Color3:
 		case UIVariableType::Color4:
 			uiVar.effectVariable->AsVector()->SetFloatVector(uiVar.colorValue);
