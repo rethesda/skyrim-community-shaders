@@ -121,23 +121,62 @@ namespace ENBExtender
 
 	// KIEFX
 
-	static constexpr uint8_t kiefxMagic[] = { 0x4B, 0x49, 0x45, 0x46, 0x58, 0x00, 0x01 };
-	static constexpr uint8_t kiefxKey[] = { 0xD8, 0x29, 0x09, 0x12, 0x64, 0x96, 0x6E, 0x2C };
+	static constexpr char kiefxMagic[] = "KIEFX\x00\x01";
+	static constexpr size_t kiefxMagicSize = sizeof(kiefxMagic) - 1;
+	static constexpr size_t kiefxKeySize = 8;
+	static uint8_t kiefxKey[kiefxKeySize] = {};
+	static bool kiefxKeyInitialized = false;
+
+	static void InitializeKIEFXKey()
+	{
+		if (kiefxKeyInitialized)
+			return;
+		kiefxKeyInitialized = true;
+
+		auto tryExtractFromFile = [](const std::filesystem::path& path) -> bool {
+			std::ifstream file(path, std::ios::binary | std::ios::ate);
+			if (!file.is_open())
+				return false;
+			auto size = file.tellg();
+			if (size <= 0)
+				return false;
+			file.seekg(0, std::ios::beg);
+			std::vector<uint8_t> data(static_cast<size_t>(size));
+			if (!file.read(reinterpret_cast<char*>(data.data()), size))
+				return false;
+			for (size_t i = 0; i + kiefxMagicSize + 1 + kiefxKeySize <= data.size(); ++i) {
+				if (memcmp(&data[i], kiefxMagic, kiefxMagicSize) == 0) {
+					memcpy(kiefxKey, &data[i + kiefxMagicSize + 1], kiefxKeySize);
+					return true;
+				}
+			}
+			return false;
+		};
+
+		std::filesystem::path dllPath = "Data\\KiLoader\\Plugins\\KiENBExtender.dll";
+		if (std::filesystem::exists(dllPath) && tryExtractFromFile(dllPath)) {
+			logger::info("[ENBExtender] Extracted KIEFX key from {}", dllPath.string());
+			return;
+		}
+
+		logger::warn("[ENBExtender] Could not find KiENBExtender.dll to extract KIEFX key");
+	}
 
 	bool IsKIEFX(const std::string& content)
 	{
-		return content.size() >= sizeof(kiefxMagic) &&
-		       memcmp(content.data(), kiefxMagic, sizeof(kiefxMagic)) == 0;
+		return content.size() >= kiefxMagicSize &&
+		       memcmp(content.data(), kiefxMagic, kiefxMagicSize) == 0;
 	}
 
 	std::string DecodeKIEFX(const std::string& content)
 	{
 		if (!IsKIEFX(content))
 			return content;
+		InitializeKIEFXKey();
 		std::string decoded;
-		decoded.reserve(content.size() - sizeof(kiefxMagic));
-		for (size_t i = sizeof(kiefxMagic); i < content.size(); ++i)
-			decoded += static_cast<char>(static_cast<uint8_t>(content[i]) ^ kiefxKey[(i - sizeof(kiefxMagic)) % sizeof(kiefxKey)]);
+		decoded.reserve(content.size() - kiefxMagicSize);
+		for (size_t i = kiefxMagicSize; i < content.size(); ++i)
+			decoded += static_cast<char>(static_cast<uint8_t>(content[i]) ^ kiefxKey[(i - kiefxMagicSize) % kiefxKeySize]);
 		return decoded;
 	}
 
