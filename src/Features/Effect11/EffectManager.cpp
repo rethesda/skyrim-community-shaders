@@ -1170,6 +1170,9 @@ void EffectManager::RenderEffectsList()
 		ENBExtender::RenderUI(mergedEffects);
 
 	for (auto* effect : standaloneEffects) {
+		if (!effect->IsFilePresent())
+			continue;
+
 		if (effect->IsCompiled()) {
 			ImGui::Separator();
 			if (ImGui::TreeNodeEx(effect->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
