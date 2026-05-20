@@ -381,6 +381,7 @@ Effect::TechniqueSequenceResult Effect::ExecuteTechniqueSequence(const std::stri
 	auto sourceTexture = effect->GetVariableByName("TextureColor")->AsShaderResource();
 
 	uint32_t swapCounter = 0;
+	uint32_t passOffset = 0;
 	bool targetInOutput = false;
 
 	ID3D11ShaderResourceView* inputSRV = nullptr;
@@ -420,7 +421,11 @@ Effect::TechniqueSequenceResult Effect::ExecuteTechniqueSequence(const std::stri
 		if (sourceTexture && sourceTexture->IsValid())
 			sourceTexture->AsShaderResource()->SetResource(inputSRV);
 
-		RenderPasses(techniqueInfo.technique.get(), outputRTV);
+		RenderPasses(techniqueInfo.technique.get(), outputRTV, passOffset);
+
+		D3DX11_TECHNIQUE_DESC td;
+		if (SUCCEEDED(techniqueInfo.technique->GetDesc(&td)))
+			passOffset += td.Passes;
 	}
 
 	return { true, targetInOutput };
@@ -999,7 +1004,7 @@ std::string Effect::GetSelectedTechnique() const
 	return "";
 }
 
-void Effect::RenderPasses(ID3DX11EffectTechnique* technique, ID3D11RenderTargetView* outputRTV)
+void Effect::RenderPasses(ID3DX11EffectTechnique* technique, ID3D11RenderTargetView* outputRTV, uint32_t passOffset)
 {
 	if (!technique || !outputRTV || !effect)
 		return;
@@ -1039,7 +1044,11 @@ void Effect::RenderPasses(ID3DX11EffectTechnique* technique, ID3D11RenderTargetV
 	technique->GetDesc(&techDesc);
 
 	for (UINT p = 0; p < techDesc.Passes; p++) {
+		if (gpuTimers)
+			gpuTimers->BeginTimer(context, std::format("{} Pass {}", GetName(), passOffset + p));
 		technique->GetPassByIndex(p)->Apply(0, context);
 		context->Draw(4, 0);
+		if (gpuTimers)
+			gpuTimers->EndTimer(context);
 	}
 }
