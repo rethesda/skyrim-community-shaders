@@ -65,6 +65,7 @@ namespace ENBExtender
 	// Weather blending
 	void LoadWeatherData(Effect& effect);
 	void ApplyWeatherBlending(Effect& effect, float blendFactor, uint32_t currentWeatherID, uint32_t lastWeatherID);
+	void SyncWeatherDataFromUI(Effect& effect, uint32_t weatherID);
 	void ClearWeatherData();
 
 	// UI rendering
