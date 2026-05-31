@@ -1,7 +1,6 @@
 #include "EffectManager.h"
 
 #include "D3D11StateBackup.h"
-#include "ENBExtender.h"
 #include "Features/Effect11.h"
 #include "State.h"
 
@@ -100,35 +99,8 @@ void EffectManager::Apply()
 	enbEffect.Apply();
 	enbEffectPostPass.Apply();
 
-	EffectBase* allEffects[] = { &enbBloom, &enbLens, &enbAdaptation, &enbEffect, &enbEffectPostPass };
-	std::vector<EffectBase*> kiefxEffects;
-	std::string concatenatedSource;
-	for (auto* effect : allEffects) {
-		if (effect->isKIEFX && effect->IsCompiled()) {
-			kiefxEffects.push_back(effect);
-			concatenatedSource += effect->preprocessedSource;
-			concatenatedSource += "\n";
-		}
-	}
-
-	if (!kiefxEffects.empty() && !concatenatedSource.empty()) {
-		auto* primary = kiefxEffects[0];
-		ENBExtender::ParseSourceGroupScopes(concatenatedSource, *primary);
-
-		for (size_t i = 1; i < kiefxEffects.size(); ++i) {
-			kiefxEffects[i]->sourceGroupMap = primary->sourceGroupMap;
-			kiefxEffects[i]->sourceOrderMap = primary->sourceOrderMap;
-			kiefxEffects[i]->groupMeta = primary->groupMeta;
-		}
-
-		for (auto* effect : kiefxEffects) {
-			effect->LoadUIVariables();
-			effect->Load();
-			effect->preprocessedSource.clear();
-		}
-	}
-
 #ifdef ENABLE_ENB_EXTENDER
+	EffectBase* allEffects[] = { &enbBloom, &enbLens, &enbAdaptation, &enbEffect, &enbEffectPostPass };
 	for (auto* effect : allEffects) {
 		if (effect->IsCompiled())
 			effect->LoadWeatherData();
@@ -1001,8 +973,10 @@ void EffectManager::RenderEffectsList()
 			standaloneEffects.push_back(effect);
 	}
 
+#ifdef ENABLE_ENB_EXTENDER
 	if (!mergedEffects.empty())
-		ENBExtender::RenderUI(mergedEffects);
+		ExtendedEffect::RenderMergedUI(mergedEffects);
+#endif
 
 	for (auto* effect : standaloneEffects) {
 		if (!effect->IsFilePresent())

@@ -33,7 +33,7 @@ bool Effect::Load()
 	std::transform(section.begin(), section.end(), section.begin(), ::toupper);
 
 	for (auto& uiVar : uiVariables) {
-		if (uiVar.isSeparator || uiVar.isLabel)
+		if (uiVar.isLabel)
 			continue;
 		if (!uiVar.effectVariable && !uiVar.isDefine)
 			continue;
@@ -92,7 +92,7 @@ void Effect::Save()
 	std::transform(section.begin(), section.end(), section.begin(), ::toupper);
 
 	for (const auto& uiVar : uiVariables) {
-		if (uiVar.isSeparator || uiVar.isLabel)
+		if (uiVar.isLabel)
 			continue;
 		if (!uiVar.effectVariable && !uiVar.isDefine)
 			continue;
@@ -176,12 +176,10 @@ bool Effect::Apply()
 		return false;
 	}
 
-	if (!isKIEFX) {
-		if (!Load()) {
-			errors.push_back("Failed to load settings");
-			logger::error("[EFFECT11] Failed to load settings for effect '{}'", GetName());
-			return false;
-		}
+	if (!Load()) {
+		errors.push_back("Failed to load settings");
+		logger::error("[EFFECT11] Failed to load settings for effect '{}'", GetName());
+		return false;
 	}
 
 	CreateEffectTextures();
@@ -198,6 +196,7 @@ void Effect::Unload()
 	variables.clear();
 	customTextureCache.clear();
 	uiVariables.clear();
+	separators.clear();
 	effectTextureCache.clear();
 	uiTechniques.clear();
 	selectedTechniqueIndex = 0;
@@ -205,7 +204,6 @@ void Effect::Unload()
 	techniqueDropdown = {};
 	sourceGroupMap.clear();
 	sourceOrderMap.clear();
-	preprocessedSource.clear();
 
 	ClearVariableCache();
 
@@ -296,10 +294,7 @@ bool Effect::LoadFXFile()
 		auto pp = preprocess(source, include);
 		if (pp.empty())
 			return false;
-		if (isKIEFX)
-			preprocessedSource = pp;
-		else
-			ENBExtender::ParseSourceGroupScopes(pp, *this);
+		ENBExtender::ParseSourceGroupScopes(pp, *this);
 		ENBExtender::StripLineDirectives(pp);
 		return compile(pp, nullptr);
 	};
@@ -355,8 +350,7 @@ bool Effect::LoadFXFile()
 	LoadTechniques();
 	LoadUITechniques();
 
-	if (!isKIEFX)
-		LoadUIVariables();
+	LoadUIVariables();
 
 	logger::info("[EFFECT11] Successfully loaded FX file: {}", filePathStr);
 	return true;
@@ -836,7 +830,7 @@ void Effect::LoadVariableFromString(UIVariable& uiVar, const std::string& value)
 void Effect::UpdateUIVariables()
 {
 	for (auto& uiVar : uiVariables) {
-		if (!uiVar.effectVariable || uiVar.isSeparator)
+		if (!uiVar.effectVariable)
 			continue;
 
 		switch (uiVar.type) {
@@ -861,7 +855,6 @@ void Effect::UpdateUIVariables()
 
 void Effect::RenderImGui()
 {
-	ENBExtender::RenderUI(*this);
 }
 
 void Effect::EnumerateAllVariables()
