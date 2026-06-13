@@ -12,22 +12,34 @@
 
 struct ScreenshotFeature : public Feature
 {
+	/** @brief Stops the background screenshot worker thread on destruction. */
 	virtual ~ScreenshotFeature();
+	/** @brief Returns the internal name of this feature. */
 	virtual std::string GetName() override { return "Screenshot"; }
+	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.screenshot.name", "Screenshot"); }
+	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual std::string GetShortName() override { return "Screenshot"; }
+	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kUtility; }
 
+	/** @brief Returns true, indicating this feature's settings are always visible in the menu. */
 	virtual bool IsInMenu() const override;
 
+	/** @brief Draws the ImGui settings UI for screenshot path, format, crop, and hotkey configuration. */
 	virtual void DrawSettings() override;
+	/** @brief Loads feature settings from the provided JSON object. */
 	virtual void LoadSettings(json& a_json) override;
+	/** @brief Saves feature settings to the provided JSON object. */
 	virtual void SaveSettings(json& a_json) override;
+	/** @brief Resets transient state (no-op for this feature). */
 	virtual void Reset() override;
+	/** @brief Called after all features are loaded (no-op for this feature). */
 	virtual void PostPostLoad() override;
 
+	/** @brief Captures a screenshot from the current back buffer and enqueues it for async encoding and save. */
 	void Capture();
-	// Runs after HDR Present processing so the back buffer matches what's on screen.
+	/** @brief Checks for a pending capture request and executes Capture() if one is pending. Called after HDR Present processing. */
 	void ProcessCaptureRequest();
 	bool applyCropToScreenshot = true;
 

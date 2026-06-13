@@ -2,16 +2,22 @@
 
 struct LinearLighting : Feature
 {
+	/** @brief Returns the singleton instance of the LinearLighting feature. */
 	static LinearLighting* GetSingleton()
 	{
 		static LinearLighting singleton;
 		return &singleton;
 	}
 
+	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Linear Lighting"; }
+	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.linear_lighting.name", "Linear Lighting"); }
+	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "LinearLighting"; }
+	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
+	/** @brief Returns a localized description and list of key features for the UI summary panel. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.linear_lighting.description", "Linear Lighting does internal color space conversion to improve lighting calculation accuracy."),
@@ -20,6 +26,7 @@ struct LinearLighting : Feature
 				T("feature.linear_lighting.key_feature_3", "Makes PBR really work") } };
 	};
 
+	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; };
 
 	struct Settings
@@ -99,23 +106,42 @@ struct LinearLighting : Feature
 	uint isDirLightLinear = false;
 	float dirLightMult = 1.0f;
 
+	/** @brief Draws the ImGui settings UI for gamma correction and lighting multiplier configuration. */
 	virtual void DrawSettings() override;
 
+	/** @brief Loads feature settings from the provided JSON object. */
 	virtual void LoadSettings(json& o_json) override;
+	/** @brief Saves feature settings to the provided JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
+	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
+	/** @brief Reads the directional light multiplier from ImageSpaceManager during the prepass. */
 	virtual void Prepass() override;
+	/** @brief Installs the BSLightingShader geometry setup hook. */
 	virtual void PostPostLoad() override;
 
+	/** @brief Creates the per-geometry constant buffer for emissive multiplier data. */
 	virtual void SetupResources() override;
 
+	/** @brief Populates and returns the per-frame constant buffer data with gamma and multiplier settings. */
 	PerFrameData GetCommonBufferData();
 
+	/**
+	 * @brief Converts an NiColor from gamma space to linear space using the specified gamma value.
+	 * @param inColor The input color in gamma space.
+	 * @param gamma The gamma exponent to apply.
+	 * @return The color converted to linear space.
+	 */
 	RE::NiColor ColorToLinear(RE::NiColor inColor, float gamma);
 
+	/**
+	 * @brief Uploads emissive multiplier data to the per-geometry constant buffer during shader setup.
+	 * @param a_pass The render pass whose lighting properties to read.
+	 */
 	void BSLightingShader_SetupGeometry(RE::BSRenderPass* a_pass);
 
+	/** @brief Contains the BSLightingShader geometry setup hook implementation. */
 	struct Hooks;
 };

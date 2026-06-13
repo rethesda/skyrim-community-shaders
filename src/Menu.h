@@ -79,27 +79,36 @@ public:
 		FontRoleDescriptor{ "Subtext", "Subtext", 0.9f }
 	};
 
+	/** @brief Gets the serialization key for a font role */
 	static constexpr std::string_view GetFontRoleKey(FontRole role)
 	{
 		return FontRoleDescriptors[static_cast<size_t>(role)].key;
 	}
 
+	/** @brief Gets the human-readable display name for a font role */
 	static constexpr std::string_view GetFontRoleDisplayName(FontRole role)
 	{
 		return FontRoleDescriptors[static_cast<size_t>(role)].displayName;
 	}
 
+	/** @brief Gets the default size scale multiplier for a font role */
 	static constexpr float GetFontRoleDefaultScale(FontRole role)
 	{
 		return FontRoleDescriptors[static_cast<size_t>(role)].defaultScale;
 	}
 
+	/**
+	 * @brief Resolves a serialization key string to a FontRole enum value.
+	 * @param key The key string to look up (e.g. "Body", "Heading").
+	 * @return The matching FontRole, or std::nullopt if not found.
+	 */
 	static std::optional<FontRole> ResolveFontRole(std::string_view key);
 
 	~Menu();
 	Menu(const Menu&) = delete;
 	Menu& operator=(const Menu&) = delete;
 
+	/** @brief Gets the singleton Menu instance */
 	static Menu* GetSingleton()
 	{
 		static Menu menu;
@@ -109,45 +118,63 @@ public:
 	bool initialized = false;
 	bool IsEnabled = false;
 
+	/** @brief Loads menu settings from JSON, including legacy migration */
 	void Load(json& o_json);
+	/** @brief Saves menu settings to JSON */
 	void Save(json& o_json);
 
+	/** @brief Loads theme settings from a JSON object */
 	void LoadTheme(json& o_json);
+	/** @brief Saves current theme settings to a JSON object */
 	void SaveTheme(json& o_json);
 
-	// Multi-theme support
+	/** @brief Scans the themes directory and returns available theme preset names */
 	std::vector<std::string> DiscoverThemes();
+	/**
+	 * @brief Loads a theme preset by name from the themes directory.
+	 * @param themeName Name of the theme file (without extension).
+	 * @return True if the theme was loaded successfully.
+	 */
 	bool LoadThemePreset(const std::string& themeName);
+	/** @brief Creates built-in default theme files if they don't exist */
 	void CreateDefaultThemes();
 
+	/** @brief Initializes ImGui, loads fonts/icons, and sets up the rendering backend */
 	void Init();
+	/** @brief Draws the main settings window with all tabs and feature panels */
 	void DrawSettings();
 
-	// Search bar state
-	std::string featureSearch;  // For left pane feature search
+	std::string featureSearch;
+	/** @brief Draws the in-game performance/debug overlay */
 	void DrawOverlay();
+	/** @brief Draws the detached weather details editor window */
 	void DrawWeatherDetailsWindow();
 
+	/** @brief Translates raw Skyrim input events into the internal key event queue */
 	void ProcessInputEvents(RE::InputEvent* const* a_events);
+	/** @brief Returns true if the menu should consume all input (menu open or capturing hotkey) */
 	bool ShouldSwallowInput();
+	/** @brief Returns true if the free camera preview is in flying mode */
 	bool IsPreviewFlying();
+	/**
+	 * @brief Builds a deterministic string signature from current font configuration.
+	 * @param baseFontSize The base pixel size before per-role scaling.
+	 * @return A signature string used to detect when fonts need reloading.
+	 */
 	std::string BuildFontSignature(float baseFontSize) const;
 
 public:
-	// Input handling flags (made public for InputEventHandler access)
 	bool settingToggleKey = false;
 	bool settingSkipCompilationKey = false;
 	bool settingsEffectsToggle = false;
 	bool settingOverlayToggleKey = false;
-	bool settingShaderBlockPrevKey = false;      // Debug: capture shader block prev key
-	bool settingShaderBlockNextKey = false;      // Debug: capture shader block next key
-	bool settingCSEditorToggleKey = false;  // CS Editor toggle key
-	bool settingScreenshotKey = false;           // Screenshot capture key
+	bool settingShaderBlockPrevKey = false;
+	bool settingShaderBlockNextKey = false;
+	bool settingCSEditorToggleKey = false;
+	bool settingScreenshotKey = false;
 
-	// Font caching (made public for ThemeManager and OverlayRenderer access)
-	// Marked mutable because they're cache fields that may be updated from const methods
-	float cachedFontSize = ThemeManager::Constants::DEFAULT_FONT_SIZE;  // Tracks whether font has been modified and may require reloading
-	mutable std::string cachedFontName = "Jost/Jost-Regular.ttf";       // Tracks whether font file has changed and may require reloading
+	float cachedFontSize = ThemeManager::Constants::DEFAULT_FONT_SIZE;
+	mutable std::string cachedFontName = "Jost/Jost-Regular.ttf";
 	std::array<std::string, static_cast<size_t>(FontRole::Count)> cachedFontFilesByRole = []() {
 		std::array<std::string, static_cast<size_t>(FontRole::Count)> files{};
 		auto setFile = [&files](FontRole role, std::string value) {
@@ -164,17 +191,16 @@ public:
 	std::string cachedFontSignature;
 	mutable std::array<ImFont*, static_cast<size_t>(FontRole::Count)> loadedFontRoles = {};
 
-	// Deferred reload systems (public for SettingsTabRenderer access)
 	bool pendingFontReload = false;
 	bool pendingIconReload = false;
 	bool pendingCursorReload = false;
 
-	// Display size tracking for cross-session resolution change detection
 	float2 lastDisplaySize{};
 	bool resetLayout = false;
 
-	// Used for resetting input keys to solve alt-tab stuck issue
+	// Alt-tab can leave modifier keys stuck; this flag triggers a reset on next frame
 	std::atomic<bool> focusChanged = false;
+	/** @brief Called on window focus change to reset stuck modifier key state */
 	void OnFocusChanged();
 
 	struct Constants
@@ -182,7 +208,6 @@ public:
 		static constexpr std::uint16_t KEY_PRESSED_MASK = 0x8000;
 	};
 
-	// UI icon textures
 	struct UIIcon
 	{
 		ID3D11ShaderResourceView* texture = nullptr;
@@ -202,19 +227,17 @@ public:
 		UIIcon loadSettings;
 		UIIcon deleteSettings;
 		UIIcon clearCache;
-		UIIcon logo;                  // New logo icon
-		UIIcon search;                // Search icon for search bars
-		UIIcon featureSettingRevert;  // Feature revert settings icon
-		UIIcon applyToGame;           // Apply changes to game icon (CS editor)
-		UIIcon pauseTime;             // Pause time icon (CS editor)
-		UIIcon undo;                  // Undo icon (CS editor)
-		UIIcon freeCamera;            // Free camera preview icon (CS editor)
-		UIIcon playMode;              // Play mode preview icon (CS editor)
+		UIIcon logo;
+		UIIcon search;
+		UIIcon featureSettingRevert;
+		UIIcon applyToGame;
+		UIIcon pauseTime;
+		UIIcon undo;
+		UIIcon freeCamera;
+		UIIcon playMode;
 
-		// Social media/external link icons
 		UIIcon discord;
 
-		// Category icons
 		UIIcon characters;
 		UIIcon display;
 		UIIcon grass;
@@ -408,13 +431,17 @@ public:
 		};
 	};
 
+	/** @brief Gets the built-in default font role settings for the given role */
 	static const ThemeSettings::FontRoleSettings& GetDefaultFontRole(FontRole role);
 
-	// Named-map palette serialization (resilient to ImGui enum changes)
+	/** @brief Serializes the full ImGui color palette as a named color map (resilient to enum reordering) */
 	static void PaletteToJson(json& themeJson, const std::array<ImVec4, ImGuiCol_COUNT>& palette);
+	/** @brief Deserializes palette from named color map or legacy positional array */
 	static void PaletteFromJson(const json& themeJson, std::array<ImVec4, ImGuiCol_COUNT>& palette);
 
+	/** @brief Serializes cursor settings to JSON using named cursor type keys */
 	static void CursorToJson(json& cursorJson, const ThemeSettings::CursorSettings& cursorSettings);
+	/** @brief Deserializes cursor settings from named-key or legacy sparse-array format */
 	static void CursorFromJson(const json& cursorJson, ThemeSettings::CursorSettings& cursor);
 
 	struct Settings
@@ -437,21 +464,28 @@ public:
 		ThemeSettings Theme;
 		std::string SelectedThemePreset = "";  // Currently selected theme preset (empty = custom/user theme)
 	};
-	const ThemeSettings& GetTheme() const { return settings.Theme; }  // Provide read-only access to the Theme.
-	Settings& GetSettings() { return settings; }                      // Provide access to settings for other components
+	/** @brief Gets the current theme settings */
+	const ThemeSettings& GetTheme() const { return settings.Theme; }
+	/** @brief Gets the mutable menu settings */
+	Settings& GetSettings() { return settings; }
+	/** @brief Gets the menu settings */
 	const Settings& GetSettings() const { return settings; }
-	winrt::com_ptr<IDXGIAdapter3> GetDXGIAdapter3() const { return dxgiAdapter3; }  // Provide access to dxgiAdapter3
+	/** @brief Gets the DXGI adapter for GPU memory queries */
+	winrt::com_ptr<IDXGIAdapter3> GetDXGIAdapter3() const { return dxgiAdapter3; }
+	/** @brief Gets the mutable font role settings for the given role */
 	ThemeSettings::FontRoleSettings& GetFontRoleSettings(FontRole role) { return settings.Theme.FontRoles[static_cast<size_t>(role)]; }
+	/** @brief Gets the font role settings for the given role */
 	const ThemeSettings::FontRoleSettings& GetFontRoleSettings(FontRole role) const { return settings.Theme.FontRoles[static_cast<size_t>(role)]; }
+	/** @brief Gets the loaded ImFont pointer for the given role */
 	ImFont* GetFont(FontRole role) const { return loadedFontRoles[static_cast<size_t>(role)]; }
 
+	/** @brief Queues a feature to be selected in the left panel on the next frame */
 	void SelectFeatureMenu(const std::string& featureName);
-	static std::unordered_map<std::string, int> categoryCounts;  // Number of features in each feature category
+	static std::unordered_map<std::string, int> categoryCounts;
 
 	bool overlayVisible = false;
 
 public:
-	// Move KeyEvent struct here
 	class CharEvent : public RE::InputEvent
 	{
 	public:
@@ -478,7 +512,7 @@ public:
 			thumbstickY(0.0f) {}
 
 		explicit KeyEvent(const RE::ThumbstickEvent* a_event) :
-			keyCode(0),  // For thumbstick events, keyCode/value are replaced by x/y floats
+			keyCode(0),
 			device(a_event->GetDevice()),
 			eventType(a_event->GetEventType()),
 			value(0),
@@ -486,7 +520,6 @@ public:
 			thumbstickX(a_event->xValue),
 			thumbstickY(a_event->yValue)
 		{}
-		// For thumbstick events, keyCode/value are replaced by x/y floats
 		uint32_t keyCode;
 		RE::INPUT_DEVICE device;
 		RE::INPUT_EVENT_TYPE eventType;
@@ -504,12 +537,10 @@ public:
 private:
 	Settings settings;
 
-	std::string cachedIniPath;  // io.IniFilename must point to a string that lives for the duration of the runtime
+	std::string cachedIniPath;  // io.IniFilename must point to a string that outlives the ImGui context
 
-	// Menu navigation
-	std::string pendingFeatureSelection;  // Feature to select on next frame
+	std::string pendingFeatureSelection;
 
-	// Input event handling
 	std::vector<KeyEvent> _keyEventQueue;
 	mutable std::shared_mutex _inputEventMutex;
 

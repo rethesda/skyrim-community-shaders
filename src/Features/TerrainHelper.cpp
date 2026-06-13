@@ -6,7 +6,6 @@
 
 void TerrainHelper::DataLoaded()
 {
-	// Get the default landscape texture set for terrain helper
 	const auto defaultLandTextureSet = RE::TESForm::LookupByEditorID<RE::BGSTextureSet>("LandscapeDefault");
 	if (defaultLandTextureSet != nullptr) {
 		logger::info("[Terrain Helper] LandscapeDefault EDID texture set found");
@@ -22,21 +21,17 @@ void TerrainHelper::DataLoaded()
 bool TerrainHelper::TESObjectLAND_SetupMaterial(RE::TESObjectLAND* land)
 {
 	if (!enabled) {
-		// terrain helper is not enabled
 		return false;
 	}
 
 	if (land == nullptr || land->loadedData == nullptr || land->loadedData->mesh[0] == nullptr) {
-		// this is not terrain or vanilla material failed
 		return false;
 	}
 
 	for (uint32_t quadI = 0; quadI < 4; ++quadI) {
-		// Get hash key of vanilla material
 		uint32_t hashKey = 0;
 
 		if (land->loadedData->mesh[quadI] == nullptr) {
-			// continue if cannot find mesh
 			continue;
 		}
 
@@ -50,11 +45,9 @@ bool TerrainHelper::TESObjectLAND_SetupMaterial(RE::TESObjectLAND* land)
 		}
 
 		if (hashKey == 0) {
-			// continue if cannot find hash key
 			continue;
 		}
 
-		// Create array of texture sets (6 tiles)
 		std::array<RE::BGSTextureSet*, 6> textureSets;
 		auto defTexture = land->loadedData->defQuadTextures[quadI];
 		if (defTexture != nullptr && defTexture->formID != 0) {
@@ -78,7 +71,6 @@ bool TerrainHelper::TESObjectLAND_SetupMaterial(RE::TESObjectLAND* land)
 			}
 		}
 
-		// Assign textures to material
 		{
 			const std::unique_lock lock(extendedSlotsMutex);
 			auto& slot = extendedSlots.try_emplace(hashKey).first->second;
@@ -156,7 +148,6 @@ void TerrainHelper::SetShaderResources(ID3D11DeviceContext* a_context)
 void TerrainHelper::BSLightingShader_SetupMaterial(RE::BSLightingShaderMaterialBase const* material)
 {
 	if (!enabled) {
-		// terrain helper is not enabled
 		return;
 	}
 
@@ -169,7 +160,6 @@ void TerrainHelper::BSLightingShader_SetupMaterial(RE::BSLightingShaderMaterialB
 		const std::shared_lock lock(extendedSlotsMutex);
 
 		if (!extendedSlots.contains(material->hashKey)) {
-			// hash does not exists
 			return;
 		}
 		materialBase = extendedSlots[material->hashKey];
@@ -180,7 +170,6 @@ void TerrainHelper::BSLightingShader_SetupMaterial(RE::BSLightingShaderMaterialB
 
 	state->permutationData.ExtraFeatureDescriptor &= ~uint(State::ExtraFeatureDescriptors::THLandHasDisplacement);
 
-	// Populate extended slots
 	// Bits 0-5 track individual texture displacement; THLandHasDisplacement (bit 9) tracks if any texture has displacement
 	for (uint32_t textureI = 0; textureI < 6; ++textureI) {
 		if (materialBase.parallax[textureI] != nullptr && materialBase.parallax[textureI] != stateData.defaultTextureNormalMap) {

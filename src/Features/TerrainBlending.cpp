@@ -305,7 +305,6 @@ void TerrainBlending::Hooks::BSBatchRenderer__RenderPassImmediately::thunk(RE::B
 
 	if (shaderCache->IsEnabled() && singleton.settings.Enabled) {
 		if (singleton.renderDepth) {
-			// Entering or exiting terrain depth section
 			bool inTerrain = a_pass->shaderProperty && a_pass->shaderProperty->flags.all(RE::BSShaderProperty::EShaderPropertyFlag::kMultiTextureLandscape);
 
 			if (inTerrain && a_pass->geometry) {
@@ -382,7 +381,6 @@ void TerrainBlending::RenderTerrainBlendingPasses()
 		auto& alphaBlendWriteMode = shadowState->GetRuntimeData().alphaBlendWriteMode;
 		auto& depthStencilDepthMode = shadowState->GetRuntimeData().depthStencilDepthMode;
 
-		// Reset alpha write and enable alpha blending
 		alphaBlendWriteMode = 1;
 		alphaBlendMode = 1;
 		stateUpdateFlags->set(RE::BSGraphics::ShaderFlags::DIRTY_ALPHA_BLEND);
@@ -393,11 +391,9 @@ void TerrainBlending::RenderTerrainBlendingPasses()
 		for (auto& renderPass : terrainRenderPasses)
 			Hooks::BSBatchRenderer__RenderPassImmediately::func(renderPass.a_pass, renderPass.a_technique, renderPass.a_alphaTest, renderPass.a_renderFlags);
 
-		// Reset alpha blending
 		alphaBlendMode = 0;
 		stateUpdateFlags->set(RE::BSGraphics::ShaderFlags::DIRTY_ALPHA_BLEND);
 
-		// Reset depth testing
 		depthStencilDepthMode = RE::BSGraphics::DepthStencilDepthMode::kTestEqual;
 		stateUpdateFlags->set(RE::BSGraphics::ShaderFlags::DIRTY_DEPTH_MODE);
 

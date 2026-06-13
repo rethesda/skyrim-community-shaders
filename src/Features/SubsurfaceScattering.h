@@ -4,6 +4,7 @@
 
 #define SSSS_N_SAMPLES 21
 
+/** @brief Simulates light penetration through translucent materials like skin using screen-space blur techniques. */
 struct SubsurfaceScattering : Feature
 {
 public:
@@ -76,12 +77,18 @@ public:
 	ID3D11ComputeShader* burleySS = nullptr;
 	RE::BGSKeyword* isBeastRaceKeyword = nullptr;
 
+	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Subsurface Scattering"; }
+	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.subsurface_scattering.name", "Subsurface Scattering"); }
+	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "SubsurfaceScattering"; }
+	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "SSS"; }
+	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kCharacters; }
 
+	/** @brief Returns a description and list of key features for the UI summary. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.subsurface_scattering.description", "Subsurface Scattering simulates light penetration through translucent materials like skin, creating more realistic character lighting.\nThis technique makes organic materials appear more lifelike and natural."),
@@ -92,32 +99,71 @@ public:
 				T("feature.subsurface_scattering.key_feature_5", "Configurable scattering properties") } };
 	};
 
+	/** @brief Indicates whether this feature injects shader defines for the given shader type. */
 	bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
+	/** @brief Creates GPU resources including constant buffers and temporary render textures. */
 	virtual void SetupResources() override;
+	/** @brief Resets per-frame state including character lighting and kernel recalculation. */
 	virtual void Reset() override;
+	/** @brief Restores all SSS settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
+	/** @brief Draws the ImGui settings panel for Subsurface Scattering configuration. */
 	virtual void DrawSettings() override;
 
+	/**
+	 * @brief Evaluates a Gaussian function modulated by a diffusion profile's falloff.
+	 * @param a_profile The diffusion profile providing falloff parameters.
+	 * @param variance The Gaussian variance.
+	 * @param r The radial distance from the sample center.
+	 * @return Per-channel Gaussian weights.
+	 */
 	float3 Gaussian(DiffusionProfile& a_profile, float variance, float r);
+
+	/**
+	 * @brief Computes a multi-Gaussian skin diffusion profile at the given distance.
+	 * @param a_profile The diffusion profile providing falloff parameters.
+	 * @param r The radial distance from the sample center.
+	 * @return Per-channel profile weights combining multiple Gaussian terms.
+	 */
 	float3 Profile(DiffusionProfile& a_profile, float r);
+
+	/**
+	 * @brief Precomputes a separable SSS blur kernel from a diffusion profile.
+	 * @param a_profile The diffusion profile to generate the kernel from.
+	 * @param kernel Output kernel structure populated with sample offsets and weights.
+	 */
 	void CalculateKernel(DiffusionProfile& a_profile, Kernel& kernel);
 
+	/** @brief Dispatches the SSS blur compute shaders (prepass, horizontal, vertical or Burley). */
 	void DrawSSS();
 
+	/** @brief Loads SSS settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
+	/** @brief Saves current SSS settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
+	/** @brief Releases all cached compute shaders for recompilation. */
 	virtual void ClearShaderCache() override;
+	/** @brief Returns the diffuse extraction prepass compute shader, compiling on first use. */
 	ID3D11ComputeShader* GetComputeShaderPrepass();
+	/** @brief Returns the horizontal separable SSS blur compute shader, compiling on first use. */
 	ID3D11ComputeShader* GetComputeShaderHorizontalBlur();
+	/** @brief Returns the vertical separable SSS blur compute shader, compiling on first use. */
 	ID3D11ComputeShader* GetComputeShaderVerticalBlur();
+	/** @brief Returns the Burley SSS compute shader, compiling on first use. */
 	ID3D11ComputeShader* GetComputeShaderBurley();
 
+	/** @brief Looks up the beast race keyword after game data is loaded. */
 	virtual void DataLoaded() override;
+	/** @brief Installs the BSLightingShader geometry setup hook after plugin load. */
 	virtual void PostPostLoad() override;
 
+	/**
+	 * @brief Detects face/face-gen materials and flags beast race status for shader permutations.
+	 * @param Pass The render pass being set up.
+	 */
 	void BSLightingShader_SetupSkin(RE::BSRenderPass* Pass);
 
 	struct Hooks

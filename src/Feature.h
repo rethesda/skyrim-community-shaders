@@ -11,33 +11,45 @@
 
 struct Feature
 {
-	// For global settings search
 	struct SettingSearchEntry
 	{
 		std::string label;
 		std::string description;
-		std::function<void()> focusCallback;  // Called to focus/highlight this setting in the UI
-		std::string featureName;              // For display context
+		std::function<void()> focusCallback;
+		std::string featureName;
 	};
-	// Override in features to expose settings for search
+
+	/** @brief Returns searchable entries for this feature's settings. */
 	virtual std::vector<SettingSearchEntry> GetSettingsSearchEntries() { return {}; }
 
-	// Nexus Mods base URL for Skyrim Special Edition
 	static constexpr std::string_view NEXUS_BASE_URL = "https://www.nexusmods.com/skyrimspecialedition/mods/";
 	bool loaded = false;
 	std::string version;
 	std::string failedLoadedMessage;
 
+	/** @brief Gets the internal name of this feature. */
 	virtual std::string GetName() = 0;
+
+	/** @brief Gets the abbreviated name used for INI files and lookup keys. */
 	virtual std::string GetShortName() = 0;
+
+	/** @brief Gets the user-facing display name; defaults to GetName(). */
 	virtual std::string GetDisplayName() { return GetName(); }
+
+	/** @brief Gets the localized display category string for UI grouping. */
 	std::string GetDisplayCategory() const;
+
+	/** @brief Gets the Nexus Mods URL for this feature's standalone mod page. */
 	virtual std::string GetFeatureModLink() { return ""; }
+
+	/** @brief Gets the preprocessor define name injected when this feature is active. */
 	virtual std::string_view GetShaderDefineName() { return ""; }
+
+	/** @brief Gets additional shader define key-value pairs for this feature. */
 	virtual std::vector<std::pair<std::string_view, std::string_view>> GetShaderDefineOptions() { return {}; }
 
 protected:
-	// Helper method to construct Nexus Mods URL from mod ID
+	/** @brief Builds a full Nexus Mods URL from a numeric mod ID. */
 	static std::string MakeNexusModURL(std::string_view modId) noexcept
 	{
 		std::string url;
@@ -48,13 +60,15 @@ protected:
 	}
 
 public:
+	/** @brief Returns whether this feature injects a shader define for the given shader type. */
 	virtual bool HasShaderDefine(RE::BSShader::Type) { return false; }
 
 	/**
-	 * Whether the feature is a CORE feature
-	 * This will place it under "Core Features" in UI
-	 * If "CORE" file is present in the root of the feature folder,
-	 * it will be merged into main cs zip file and automatically considered core
+	 * @brief Whether the feature is a CORE feature.
+	 *
+	 * Core features appear under "Core Features" in the UI. If a "CORE" file
+	 * is present in the feature folder root, the feature is bundled into the
+	 * main CS zip and automatically considered core.
 	 */
 	virtual bool IsCore() const
 	{
@@ -62,8 +76,9 @@ public:
 	}
 
 	/**
-	 * Get the category for UI grouping (e.g., "Terrain", "Lighting", "Characters", etc.)
-	 * Core features will be distributed to their respective categories
+	 * @brief Gets the category for UI grouping (e.g., "Terrain", "Lighting", "Characters").
+	 *
+	 * Core features are distributed to their respective categories.
 	 */
 	virtual std::string_view GetCategory() const { return FeatureCategories::kOther; }
 
@@ -85,18 +100,30 @@ public:
 	virtual bool DrawFailLoadMessage() const { return true; }
 
 	/**
-	 * Get feature summary and key features for hover tooltip and unloaded UI
-	 *
-	 * \return Pair containing feature summary description and vector of key feature bullet points
+	 * @brief Gets the feature summary and key features for hover tooltip and unloaded UI.
+	 * @return Pair of {description, key feature bullet points}.
 	 */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() { return {}; }
+
+	/** @brief Allocates GPU resources (textures, buffers) needed by this feature. */
 	virtual void SetupResources() {}
+
+	/** @brief Releases and recreates transient state (e.g. on resolution change). */
 	virtual void Reset() {}
+
+	/** @brief Draws the ImGui settings panel for this feature. */
 	virtual void DrawSettings() {}
+
+	/** @brief Draws the UI shown when this feature failed to load. */
 	virtual void DrawUnloadedUI();
 
+	/** @brief Per-frame work executed before the reflections pass. */
 	virtual void ReflectionsPrepass() {};
+
+	/** @brief Per-frame work executed before the main rendering pass. */
 	virtual void Prepass() {}
+
+	/** @brief Per-frame work executed before Prepass, earliest per-frame hook. */
 	virtual void EarlyPrepass() {}
 
 	/**
@@ -111,17 +138,40 @@ public:
 	 */
 	virtual void GenerateShaderPermutations(RE::BSShader*) {}
 
-	virtual void Load() {}  // Called during SKSE Load - earliest hook point only for critical hooks like d3d
+	/** @brief Called during SKSE Load -- earliest hook point, only for critical hooks like D3D. */
+	virtual void Load() {}
+
+	/** @brief Called after all game data files have been loaded. */
 	virtual void DataLoaded() {}
+
+	/** @brief Called after all SKSE plugins have finished PostLoad. */
 	virtual void PostPostLoad() {}
 
+	/**
+	 * @brief Loads the feature from its INI file and JSON settings.
+	 *
+	 * Validates the INI version against FeatureVersions, sets the loaded flag,
+	 * and delegates to LoadSettings on success.
+	 * @param o_json Root JSON object containing per-feature settings sections.
+	 */
 	void Load(json& o_json);
+
+	/** @brief Serializes this feature's settings into the given JSON object. */
 	void Save(json& o_json);
 
+	/** @brief Serializes feature-specific settings to JSON. */
 	virtual void SaveSettings(json&) {}
+
+	/** @brief Deserializes feature-specific settings from JSON. */
 	virtual void LoadSettings(json&) {}
 
+	/** @brief Resets all settings to their compiled-in defaults. */
 	virtual void RestoreDefaultSettings() {}
+
+	/**
+	 * @brief Toggles the "disabled at boot" state for this feature.
+	 * @return The new disabled state (true = disabled at boot).
+	 */
 	virtual bool ToggleAtBootSetting();
 
 	/**
@@ -140,7 +190,6 @@ public:
 		std::string sectionName;             // Display name for the collapsible section (empty = no weather analysis)
 		std::function<void()> drawFunction;  // Custom draw function for weather analysis content
 
-		// Constructor for easy initialization
 		WeatherAnalysisConfig() = default;
 		WeatherAnalysisConfig(const std::string& name, std::function<void()> drawFunc) :
 			sectionName(name), drawFunction(std::move(drawFunc)) {}
@@ -173,10 +222,23 @@ public:
 	 */
 	virtual std::vector<FeatureConstraints::Constraint> GetActiveConstraints() const { return {}; }
 
+	/**
+	 * @brief Validates this feature's disk-cache entry against current install state.
+	 * @param a_ini The cache INI to read from.
+	 * @return True if the cache entry matches the current feature version and load state.
+	 */
 	virtual bool ValidateCache(CSimpleIniA& a_ini);
+
+	/**
+	 * @brief Writes this feature's version and enabled state into the disk-cache INI.
+	 * @param a_ini The cache INI to write to.
+	 */
 	virtual void WriteDiskCacheInfo(CSimpleIniA& a_ini);
+
+	/** @brief Invalidates any cached compiled shaders owned by this feature. */
 	virtual void ClearShaderCache() {}
 
+	/** @brief Returns the global list of all registered feature instances. */
 	static const std::vector<Feature*>& GetFeatureList();
 
 	/**
@@ -194,52 +256,36 @@ public:
 	 */
 	static std::vector<std::string> GetLoadedFeatureNames();
 
-	// Feature utility functions
 	/**
-	 * @brief Gets the minimum required version for a feature.
-	 *
-	 * This function looks up the minimum required version for a feature
-	 * from FeatureVersions::FEATURE_MINIMAL_VERSIONS and returns it as a
-	 * formatted string. Returns "unknown" if the feature is not found.
-	 *
+	 * @brief Gets the minimum required version for a feature as a formatted string.
 	 * @param shortName The short name of the feature.
-	 * @return The formatted minimum required version string, or "unknown" if not found.
+	 * @return Formatted version string, or "unknown" if the feature is not in FEATURE_MINIMAL_VERSIONS.
 	 */
 	static std::string GetFeatureRequiredVersion(const std::string& shortName);
 
 	/**
 	 * @brief Checks if a feature has a minimum required version defined.
-	 *
-	 * This function checks if a feature exists in the FeatureVersions::FEATURE_MINIMAL_VERSIONS
-	 * map and optionally returns the version.
-	 *
 	 * @param shortName The short name of the feature.
-	 * @param outVersion Pointer to REL::Version to store the version if found (optional).
-	 * @return True if the feature is found, false otherwise.
+	 * @param outVersion If non-null, receives the minimum version when found.
+	 * @return True if the feature exists in FEATURE_MINIMAL_VERSIONS.
 	 */
 	static bool IsFeatureKnown(const std::string& shortName, REL::Version* outVersion = nullptr);
 
-	/**
-	 * @brief Execute a callable for each loaded feature with optional Tracy CPU profiling
-	 *
-	 * Iterates through all loaded features and calls the provided function with automatic
-	 * CPU profiling zones (ZoneScoped/ZoneName via Tracy) when TRACY_ENABLE is defined.
-	 * Thread-local string formatting is used to minimize per-call overhead.
-	 *
-	 * Usage:
-	 *   Feature::ForEachLoadedFeature("Reset", [](Feature* feature) { feature->Reset(); });
-	 *   Feature::ForEachLoadedFeature("Prepass", [](Feature* feature) { feature->Prepass(); });
-	 *
-	 * @param methodName Name of the method being called (used for Tracy zone naming)
-	 * @param callback Callable that receives (Feature*) and performs the operation
-	 */
-	// Called once from State after TracyD3D11Context is created so ForEachLoadedFeature
+	// Injected once from State after TracyD3D11Context is created so ForEachLoadedFeature
 	// can emit GPU timer zones without pulling in State headers here.
 #ifdef TRACY_ENABLE
 	inline static TracyD3D11Ctx s_tracyCtx = nullptr;
+
+	/** @brief Sets the Tracy GPU context used by ForEachLoadedFeature for GPU profiling zones. */
 	static void SetTracyCtx(TracyD3D11Ctx ctx) noexcept { s_tracyCtx = ctx; }
 #endif
 
+	/**
+	 * @brief Invokes a callback on every loaded feature with optional Tracy profiling.
+	 * @param methodName Label for the Tracy zone (e.g. "Reset", "Prepass").
+	 * @param callback Callable receiving a Feature* for each loaded feature.
+	 * @param emitGpuZone When true and Tracy is enabled, also emits a GPU timer zone.
+	 */
 	template <typename Func>
 	static inline void ForEachLoadedFeature(std::string_view methodName, Func&& callback, bool emitGpuZone = false)
 	{

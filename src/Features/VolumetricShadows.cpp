@@ -8,7 +8,6 @@ void VolumetricShadows::SetupResources()
 {
 	auto device = globals::d3d::device;
 
-	// Create samplers
 	{
 		D3D11_SAMPLER_DESC samplerDesc = {};
 		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -22,7 +21,6 @@ void VolumetricShadows::SetupResources()
 		Util::SetResourceName(linearSampler, "VolumetricShadows::LinearSampler");
 	}
 
-	// Compile compute shaders
 	std::vector<std::pair<const char*, const char*>> defines;
 	defines.push_back({ "DOWNSAMPLE_SHADOW_MIP0", nullptr });
 	downsampleShadowMip0CS = static_cast<ID3D11ComputeShader*>(Util::CompileShader(L"Data\\Shaders\\VolumetricShadows\\DownsampleShadowCS.hlsl", defines, "cs_5_0"));
@@ -87,11 +85,9 @@ void VolumetricShadows::CopyShadowLightData()
 
 		context->PSGetShaderResources(4, 1, &shadowView);
 
-		// Downsample shadow texture array to fixed 512x512 (mip1: 256x256)
 		if (shadowView) {
 			constexpr uint32_t SHADOW_COPY_SIZE = 512;
 
-			// Lazily create fixed-size output textures
 			if (!shadowCopyTexture) {
 				shadowCopyWidth = SHADOW_COPY_SIZE;
 				shadowCopyHeight = SHADOW_COPY_SIZE;
@@ -120,7 +116,6 @@ void VolumetricShadows::CopyShadowLightData()
 				DX::ThrowIfFailed(device->CreateShaderResourceView(shadowCopyTexture, &srvDesc, &shadowCopySRV));
 				Util::SetResourceName(shadowCopySRV, "VolumetricShadows::ShadowCopy SRV");
 
-				// Create mip-specific SRVs for blur passes
 				srvDesc.Texture2D.MostDetailedMip = 0;
 				srvDesc.Texture2D.MipLevels = 1;
 				DX::ThrowIfFailed(device->CreateShaderResourceView(shadowCopyTexture, &srvDesc, &shadowCopyMip0SRV));
@@ -142,11 +137,9 @@ void VolumetricShadows::CopyShadowLightData()
 				DX::ThrowIfFailed(device->CreateUnorderedAccessView(shadowCopyTexture, &uavDesc, &shadowCopyMip1UAV));
 				Util::SetResourceName(shadowCopyMip1UAV, "VolumetricShadows::ShadowCopy UAV mip1");
 
-				// Create temporary texture for blur intermediate result
 				DX::ThrowIfFailed(device->CreateTexture2D(&copyDesc, nullptr, &shadowBlurTempTexture));
 				Util::SetResourceName(shadowBlurTempTexture, "VolumetricShadows::ShadowBlurTemp");
 
-				// Create mip-specific SRVs for blur temp texture
 				srvDesc.Texture2D.MostDetailedMip = 0;
 				srvDesc.Texture2D.MipLevels = 1;
 				DX::ThrowIfFailed(device->CreateShaderResourceView(shadowBlurTempTexture, &srvDesc, &shadowBlurTempMip0SRV));
@@ -166,7 +159,6 @@ void VolumetricShadows::CopyShadowLightData()
 				Util::SetResourceName(shadowBlurTempMip1UAV, "VolumetricShadows::ShadowBlurTemp UAV mip1");
 			}
 
-			// Get input dimensions for dispatch sizing
 			ID3D11Resource* shadowResource = nullptr;
 			shadowView->GetResource(&shadowResource);
 
@@ -178,7 +170,6 @@ void VolumetricShadows::CopyShadowLightData()
 					D3D11_TEXTURE2D_DESC srcDesc;
 					shadowTexture->GetDesc(&srcDesc);
 
-					// Dispatch downsample compute shader
 					auto renderer = globals::game::renderer;
 					auto& esramDepthStencil = renderer->GetDepthStencilData().depthStencils[RE::RENDER_TARGETS_DEPTHSTENCIL::kVOLUMETRIC_LIGHTING_SHADOWMAPS_ESRAM];
 
@@ -206,7 +197,6 @@ void VolumetricShadows::CopyShadowLightData()
 					context->Dispatch(dispatchSize, dispatchSize, 1);
 					globals::profiler->EndPass();
 
-					// Unbind SRVs before blur passes
 					csSrvs[0] = nullptr;
 					csSrvs[1] = nullptr;
 					context->CSSetShaderResources(0, 2, csSrvs);
@@ -230,7 +220,6 @@ void VolumetricShadows::CopyShadowLightData()
 						context->Dispatch((mip0Size + GROUP_SIZE - 1) / GROUP_SIZE, mip0Size, 1);
 						globals::profiler->EndPass();
 
-						// Unbind for next pass
 						blurSrvs[0] = nullptr;
 						context->CSSetShaderResources(0, 1, blurSrvs);
 						csUavs[0] = nullptr;
@@ -246,7 +235,6 @@ void VolumetricShadows::CopyShadowLightData()
 						context->Dispatch(mip0Size, (mip0Size + GROUP_SIZE - 1) / GROUP_SIZE, 1);
 						globals::profiler->EndPass();
 
-						// Unbind
 						blurSrvs[0] = nullptr;
 						context->CSSetShaderResources(0, 1, blurSrvs);
 						csUavs[0] = nullptr;
@@ -267,7 +255,6 @@ void VolumetricShadows::CopyShadowLightData()
 						context->Dispatch((mip1Size + GROUP_SIZE - 1) / GROUP_SIZE, mip1Size, 1);
 						globals::profiler->EndPass();
 
-						// Unbind for next pass
 						blurSrvs[0] = nullptr;
 						context->CSSetShaderResources(0, 1, blurSrvs);
 						csUavs[0] = nullptr;
@@ -283,14 +270,12 @@ void VolumetricShadows::CopyShadowLightData()
 						context->Dispatch(mip1Size, (mip1Size + GROUP_SIZE - 1) / GROUP_SIZE, 1);
 						globals::profiler->EndPass();
 
-						// Unbind
 						blurSrvs[0] = nullptr;
 						context->CSSetShaderResources(0, 1, blurSrvs);
 						csUavs[0] = nullptr;
 						context->CSSetUnorderedAccessViews(0, 1, csUavs, nullptr);
 					}
 
-					// Cleanup CS state
 					ID3D11SamplerState* nullSampler = nullptr;
 					context->CSSetSamplers(0, 1, &nullSampler);
 					context->CSSetShader(nullptr, nullptr, 0);

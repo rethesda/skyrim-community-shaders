@@ -6,11 +6,17 @@ private:
 	static constexpr std::string_view MOD_ID = "149011";
 
 public:
+	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Hair Specular"; }
+	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.hair_specular.name", "Hair Specular"); }
+	/** @brief Returns the short identifier used for file paths and settings keys. */
 	virtual inline std::string GetShortName() override { return "HairSpecular"; }
+	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "CS_HAIR"; }
+	/** @brief Returns the category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kCharacters; }
+	/** @brief Returns a localized description and key feature bullet points for the UI. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.hair_specular.description", "Provides better hair shading with realistic specular highlights and tangent-based light interaction for more lifelike hair appearance."),
@@ -20,12 +26,16 @@ public:
 				T("feature.hair_specular.key_feature_4", "Tangent shift texture support for varied hair highlights") } };
 	};
 
+	/** @brief Returns true only for Lighting shader type. */
 	virtual bool HasShaderDefine(RE::BSShader::Type shaderType) override { return shaderType == RE::BSShader::Type::Lighting; };
 
+	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
 
+	/** @brief Binds the tangent shift texture as a pixel shader resource. */
 	virtual void Prepass() override;
 
+	/** @brief Loads the tangent shift DDS texture from disk and creates its SRV. */
 	virtual void SetupResources() override;
 
 	struct alignas(16) Settings
@@ -52,11 +62,15 @@ public:
 
 	eastl::unique_ptr<Texture2D> texTangentShift = nullptr;
 
+	/** @brief Draws the ImGui settings UI for hair shading model, specular, and self-shadow options. */
 	virtual void DrawSettings() override;
 
+	/** @brief Loads hair specular settings from JSON. */
 	virtual void LoadSettings(json& o_json) override;
+	/** @brief Saves hair specular settings to JSON. */
 	virtual void SaveSettings(json& o_json) override;
 
+	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 };

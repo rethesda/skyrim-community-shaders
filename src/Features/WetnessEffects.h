@@ -2,19 +2,27 @@
 
 #include "Buffer.h"
 
+/** @brief Adds dynamic weather-driven wetness, puddle formation, shore wetness, and raindrop effects. */
 struct WetnessEffects : Feature
 {
 private:
 	static constexpr std::string_view MOD_ID = "112739";
 
 public:
+	/** @brief Returns the internal feature name. */
 	virtual inline std::string GetName() override { return "Wetness Effects"; }
+	/** @brief Returns the user-facing display name. */
 	virtual std::string GetDisplayName() override { return T("feature.wetness_effects.name", "Wetness Effects"); }
+	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "WetnessEffects"; }
+	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
+	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "WETNESS_EFFECTS"; }
+	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kWater; }
 
+	/** @brief Returns a summary description and list of key features for the UI. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.wetness_effects.description", "Adds realistic wetness effects including rain-based surface wetness, puddle formation, shore wetness, and dynamic raindrop effects for enhanced weather immersion."),
@@ -25,6 +33,7 @@ public:
 				T("feature.wetness_effects.key_feature_5", "Support for skin wetness and material-specific responses") } };
 	};
 
+	/** @brief Indicates that this feature injects shader defines for all shader types. */
 	bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
 	struct Settings
@@ -106,20 +115,26 @@ public:
 	static constexpr ClimatePreset defaultPreset = ClimatePreset::NordicStandard;
 	ClimatePreset climatePreset = defaultPreset;
 
+	/** @brief Builds the per-frame constant buffer data including weather state and settings. */
 	PerFrame GetCommonBufferData() const;
 
+	/** @brief Updates wetness state and binds the per-frame constant buffer. */
 	virtual void Prepass() override;
+	/** @brief Detects Splashes of Storms mod presence for compatibility handling. */
 	virtual void PostPostLoad() override;
 
+	/** @brief Draws the ImGui settings panel for wetness effects configuration. */
 	virtual void DrawSettings() override;
 
+	/** @brief Loads feature settings from the JSON configuration. */
 	virtual void LoadSettings(json& o_json) override;
+	/** @brief Saves feature settings to the JSON configuration. */
 	virtual void SaveSettings(json& o_json) override;
 
+	/** @brief Restores all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
-
-	// Override to provide weather analysis configuration
+	/** @brief Returns the weather analysis configuration for the debug weather analysis panel. */
 	virtual WeatherAnalysisConfig GetWeatherAnalysisConfig() const override
 	{
 		return WeatherAnalysisConfig("Rain & Wetness Analysis", [this]() {
@@ -130,12 +145,40 @@ public:
 	// Constants and utilities for rain intensity calculations
 	static constexpr float MAX_RAIN_PARTICLE_DENSITY = 3.0f;
 
-	// Helper function to extract rain intensity from precipitation object and weather
-	static float GetRainIntensity(RE::NiPointer<RE::BSGeometry> precipObject, RE::TESWeather* weather);  // Helper function to calculate precipitation rate from shader data and settings
+	/**
+	 * @brief Extracts rain intensity from the active precipitation geometry and weather.
+	 * @param precipObject The precipitation particle geometry.
+	 * @param weather The current weather form.
+	 * @return Normalized rain intensity in the range [0, 1].
+	 */
+	static float GetRainIntensity(RE::NiPointer<RE::BSGeometry> precipObject, RE::TESWeather* weather);
+	/**
+	 * @brief Calculates the precipitation rate in mm/hr from raindrop shader parameters.
+	 * @param raindropChance Probability of a raindrop spawning per grid cell per interval.
+	 * @param raindropGridSizeGameUnits Size of each raindrop grid cell in game units.
+	 * @param raindropIntervalSeconds Time between raindrop spawn attempts in seconds.
+	 * @param mlPerDrop Volume of each raindrop in milliliters.
+	 * @return Estimated precipitation rate in mm/hr.
+	 */
 	float CalculatePrecipitationRate(float raindropChance, float raindropGridSizeGameUnits, float raindropIntervalSeconds, float mlPerDrop = 0.01f) const;
+	/**
+	 * @brief Returns the climate settings for a given preset.
+	 * @param preset The climate preset to look up.
+	 * @return Reference to the preset's climate settings.
+	 */
 	static const ClimateSettings& GetClimateSettings(ClimatePreset preset);
+	/**
+	 * @brief Applies a climate preset, overwriting the current wetness and raindrop settings.
+	 * @param preset The climate preset to apply.
+	 */
 	void ApplyClimatePreset(ClimatePreset preset);
+	/**
+	 * @brief Checks whether the current settings exactly match a given climate preset.
+	 * @param preset The climate preset to compare against.
+	 * @return True if all settings match the preset values.
+	 */
 	bool DoesCurrentSettingsMatchPreset(ClimatePreset preset) const;
+	/** @brief Detects which climate preset matches the current settings, if any. */
 	void DetectCurrentPreset();
 
 private:

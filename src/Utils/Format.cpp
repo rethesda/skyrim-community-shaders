@@ -55,15 +55,12 @@ namespace Util
 	{
 		std::string lowerFilePath = a_path;
 
-		// Replace all backslashes with forward slashes
 		std::replace(lowerFilePath.begin(), lowerFilePath.end(), '\\', '/');
 
-		// Remove consecutive forward slashes
 		std::string::iterator newEnd = std::unique(lowerFilePath.begin(), lowerFilePath.end(),
 			[](char a, char b) { return a == '/' && b == '/'; });
 		lowerFilePath.erase(newEnd, lowerFilePath.end());
 
-		// Convert all characters to lowercase
 		std::transform(lowerFilePath.begin(), lowerFilePath.end(), lowerFilePath.begin(),
 			[](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
@@ -135,15 +132,12 @@ namespace Util
 			auto fileTimeT = std::chrono::system_clock::to_time_t(systemTime);
 			auto nowT = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-			// Check if file time is in the future
 			if (fileTimeT > nowT) {
 				return "Future";
 			}
 
-			// Calculate duration in seconds
 			auto seconds = static_cast<int64_t>(nowT - fileTimeT);
 
-			// Format based on time difference
 			if (seconds < 60) {
 				return std::to_string(seconds) + "s ago";
 			} else if (seconds < 3600) {
@@ -194,7 +188,6 @@ namespace Util
 		LARGE_INTEGER currentTime;
 		QueryPerformanceCounter(&currentTime);
 
-		// Calculate elapsed seconds
 		int64_t elapsedTicks = currentTime.QuadPart - lastTime.QuadPart;
 		if (elapsedTicks < 0) {
 			return "0s";  // Handle case where clock went backwards
@@ -202,7 +195,6 @@ namespace Util
 
 		int64_t elapsedSeconds = elapsedTicks / frequency.QuadPart;
 
-		// Format the same way as TimeAgoString
 		if (elapsedSeconds < 60) {
 			return std::to_string(elapsedSeconds) + "s";
 		} else if (elapsedSeconds < 3600) {
@@ -232,7 +224,6 @@ namespace Util
 
 	std::string FormatDeltaWithPercent(float delta)
 	{
-		// Format as percentage with sign
 		char buffer[32];
 		if (delta >= 0.0f) {
 			std::snprintf(buffer, sizeof(buffer), "+%.1f%%", delta);

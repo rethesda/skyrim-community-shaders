@@ -289,7 +289,6 @@ void CellLightingWidget::LoadSettings()
 	if (!lighting)
 		return;
 
-	// Try to load from JSON first
 	if (!js.empty()) {
 		settings = vanillaSettings;
 		try {
@@ -502,19 +501,16 @@ void CellLightingWidget::ApplyChanges()
 	if (!lighting)
 		return;
 
-	// Apply basic colors
 	Float3ToColor(settings.ambient, lighting->ambient);
 	Float3ToColor(settings.directional, lighting->directional);
 	Float3ToColor(settings.fogColorNear, lighting->fogColorNear);
 	Float3ToColor(settings.fogColorFar, lighting->fogColorFar);
 
-	// Apply fog properties
 	lighting->fogNear = settings.fogNear;
 	lighting->fogFar = settings.fogFar;
 	lighting->fogPower = settings.fogPower;
 	lighting->fogClamp = settings.fogClamp;
 
-	// Apply advanced properties
 	lighting->directionalFade = settings.directionalFade;
 	lighting->clipDist = settings.clipDist;
 	lighting->lightFadeStart = settings.lightFadeStart;
@@ -522,7 +518,6 @@ void CellLightingWidget::ApplyChanges()
 	lighting->directionalXY = settings.directionalXY;
 	lighting->directionalZ = settings.directionalZ;
 
-	// Apply directional ambient lighting colors
 	auto& dalc = lighting->directionalAmbientLightingColors;
 	Float3ToColor(settings.directionalXPlus, dalc.directional.x.max);
 	Float3ToColor(settings.directionalXMinus, dalc.directional.x.min);
@@ -533,7 +528,6 @@ void CellLightingWidget::ApplyChanges()
 	Float3ToColor(settings.directionalSpecular, dalc.specular);
 	dalc.fresnelPower = settings.fresnelPower;
 
-	// Apply inheritance flags
 	lighting->lightingTemplateInheritanceFlags.reset();
 	if (settings.inheritAmbientColor)
 		lighting->lightingTemplateInheritanceFlags.set(RE::INTERIOR_DATA::Inherit::kAmbientColor);

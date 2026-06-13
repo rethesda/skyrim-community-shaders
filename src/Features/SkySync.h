@@ -3,18 +3,25 @@
 
 #include "Utils/Moon.h"
 
+/** @brief Synchronizes volumetric lighting and shadow direction with actual sun and moon positions. */
 struct SkySync : Feature
 {
 private:
 	static constexpr std::string_view MOD_ID = "153543";
 
 public:
+	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Sky Sync"; }
+	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.sky_sync.name", "Sky Sync"); }
+	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "SkySync"; }
+	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
+	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kSky; }
 
+	/** @brief Returns a description and list of key features for the UI summary. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.sky_sync.description", "Synchronizes volumetric lighting and shadows with the actual sun and moon positions in the sky."),
@@ -43,17 +50,28 @@ public:
 
 	Settings settings;
 
+	/** @brief Draws the ImGui settings panel for Sky Sync configuration. */
 	virtual void DrawSettings() override;
 
+	/** @brief Loads sky sync settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
+	/** @brief Saves current sky sync settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
+	/** @brief Restores all sky sync settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
+	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; }
 
+	/**
+	 * @brief Dims sunlight color when the sun is below the horizon during sky color updates.
+	 * @param sky The sky object whose directional light color may be modified.
+	 */
 	void OnSkyUpdateColors(RE::Sky* sky);
 
+	/** @brief Installs rendering hooks and detects conflicting mods after plugin load. */
 	virtual void PostPostLoad() override;
+	/** @brief Checks for conflicting ESP files after game data is loaded. */
 	virtual void DataLoaded() override;
 
 	struct Sky_Update

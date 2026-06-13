@@ -512,21 +512,18 @@ std::unique_ptr<SettingsOverrideManager::OverrideInfo> SettingsOverrideManager::
 
 std::pair<std::string, std::string> SettingsOverrideManager::ParseOverrideFilename(const std::string& filename)
 {
-	// Remove .json extension
 	std::string nameWithoutExt = filename;
 	const std::string jsonExt = ".json";
 	if (nameWithoutExt.ends_with(jsonExt)) {
 		nameWithoutExt = nameWithoutExt.substr(0, nameWithoutExt.length() - jsonExt.length());
 	}
 
-	// Check for global override
 	const std::string globalSuffix = "_Global";
 	if (nameWithoutExt.ends_with(globalSuffix)) {
 		std::string modName = nameWithoutExt.substr(0, nameWithoutExt.length() - globalSuffix.length());
 		return { modName, "" };  // Empty feature name indicates global
 	}
 
-	// Parse ModName_FeatureName format
 	size_t lastUnderscore = nameWithoutExt.find_last_of('_');
 	if (lastUnderscore != std::string::npos && lastUnderscore > 0) {
 		std::string modName = nameWithoutExt.substr(0, lastUnderscore);
@@ -976,7 +973,6 @@ bool SettingsOverrideManager::LoadUserOverride(const std::string& featureName, j
 			return false;
 		}
 
-		// Merge user settings on top
 		MergeJson(featureJson, userJson);
 		logger::info("Loaded user override for {}", featureName);
 		return true;

@@ -107,7 +107,7 @@ public:
 		return IsValidDevice(GetDevice()) && GetKey() != 0;
 	}
 
-	/// Checks if a VK key code with current modifier state exactly matches a keyboard combo.
+	/** @brief Checks if a VK key code with current modifier state exactly matches a keyboard combo. */
 	static bool MatchesKeyboardCombo(const std::vector<InputCombo>& combo, uint32_t vkKey)
 	{
 		if (combo.empty() || combo.back().GetKey() != vkKey || combo.back().GetDevice() != InputDeviceType::Keyboard)

@@ -1,5 +1,6 @@
 #pragma once
 
+/** @brief Simulates realistic ambient lighting by calculating sky occlusion via a 3D probe array. */
 struct Skylighting : Feature
 {
 private:
@@ -7,12 +8,19 @@ private:
 
 public:
 
+	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Skylighting"; }
+	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.skylighting.name", "Skylighting"); }
+	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "Skylighting"; }
+	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
+	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "SKYLIGHTING"; }
+	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
+	/** @brief Returns a description and list of key features for the UI summary. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.skylighting.description", "Simulates realistic ambient lighting by calculating sky occlusion and directional lighting, providing more accurate and natural illumination in outdoor environments."),
@@ -23,20 +31,30 @@ public:
 				T("feature.skylighting.key_feature_5", "Integration with existing lighting systems") } };
 	};
 
+	/** @brief Indicates whether this feature injects shader defines for the given shader type. */
 	virtual bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
+	/** @brief Restores all skylighting settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
+	/** @brief Draws the ImGui settings panel for Skylighting configuration. */
 	virtual void DrawSettings() override;
 
+	/** @brief Loads skylighting settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
+	/** @brief Saves current skylighting settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
+	/** @brief Creates GPU resources including occlusion textures, probe arrays, and samplers. */
 	virtual void SetupResources() override;
+	/** @brief Releases cached compute shaders and recompiles them. */
 	virtual void ClearShaderCache() override;
+	/** @brief Compiles the probe update compute shader from HLSL source. */
 	void CompileComputeShaders();
 
+	/** @brief Dispatches the probe update compute shader during the prepass stage. */
 	virtual void Prepass() override;
 
+	/** @brief Installs rendering hooks and registers event handlers after plugin load. */
 	virtual void PostPostLoad() override;
 
 	//////////////////////////////////////////////////////////////////////////////////
@@ -65,6 +83,11 @@ public:
 	};
 	static_assert(sizeof(SkylightingCB) % 16 == 0);
 
+	/**
+	 * @brief Builds the skylighting constant buffer data from current probe array state.
+	 * @param a_inWorld Whether the player is currently in an exterior worldspace.
+	 * @return Populated SkylightingCB structure, or zeroed if not in world or map menu is open.
+	 */
 	SkylightingCB GetCommonBufferData(bool a_inWorld);
 
 	winrt::com_ptr<ID3D11SamplerState> comparisonSampler = nullptr;
@@ -86,6 +109,7 @@ public:
 	float4 OcclusionDir;
 	uint frameCount = 0;
 
+	/** @brief Clears the accumulation frames array to force a full rebuild of skylighting probes. */
 	void ResetSkylighting();
 
 	std::chrono::time_point<std::chrono::system_clock> lastUpdateTimer = std::chrono::system_clock::now();
@@ -99,6 +123,7 @@ public:
 		static inline REL::Relocation<decltype(thunk)> func;
 	};
 
+	/** @brief Renders the skylighting occlusion map using the precipitation rendering system. */
 	void RenderOcclusion();
 
 	struct Main_Precipitation_RenderOcclusion

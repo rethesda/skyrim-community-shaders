@@ -2,19 +2,27 @@
 
 #include "I18n/I18n.h"
 
+/** @brief Advanced skin rendering feature with dual specular lobes, detail textures, and wetness effects. */
 struct Skin : Feature
 {
+	/** @brief Returns the singleton instance of the Skin feature. */
 	static Skin* GetSingleton()
 	{
 		static Skin singleton;
 		return &singleton;
 	}
 
+	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Advanced Skin"; }
+	/** @brief Returns the localized display name for the UI. */
 	virtual inline std::string GetDisplayName() override { return T("feature.skin.name", "Advanced Skin"); }
+	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "Skin"; }
+	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "CS_SKIN"; }
+	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kCharacters; }
+	/** @brief Returns a description and list of key features for the UI summary. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return {
@@ -25,24 +33,34 @@ struct Skin : Feature
 				T("feature.skin.key_feature_4", "Reworked wetness system for dynamic skin effects") }
 		};
 	}
+	/** @brief Indicates whether this feature injects shader defines for the given shader type. */
 	virtual inline bool HasShaderDefine(RE::BSShader::Type t) override
 	{
 		return t == RE::BSShader::Type::Lighting;
 	};
 
 
+	/** @brief Restores all skin settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
+	/** @brief Draws the ImGui settings panel for Advanced Skin configuration. */
 	virtual void DrawSettings() override;
 
+	/** @brief Loads skin settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
+	/** @brief Saves current skin settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
+	/** @brief Binds the skin detail texture to the pixel shader during the prepass stage. */
 	virtual void Prepass() override;
+	/** @brief Installs rendering hooks for material and geometry setup after plugin load. */
 	virtual void PostPostLoad() override;
 
+	/** @brief Creates GPU resources including the skin detail texture and per-geometry constant buffer. */
 	virtual void SetupResources() override;
 
+	/** @brief Reloads the skin detail normal map texture from disk. */
 	void ReloadSkinDetail();
+	/** @brief Loads the skin detail normal map DDS texture and creates its shader resource view. */
 	void LoadSkinDetailTexture();
 
 	struct Settings
@@ -118,13 +136,39 @@ struct Skin : Feature
 	std::unordered_map<uint32_t, ExtraTextures> skinExtraTextures;
 	std::unordered_map<uint32_t, float4> actorWetnessMap;  // keyed by actor formID
 
+	/** @brief Packs current skin settings into a GPU constant buffer data structure. */
 	SkinData GetCommonBufferData();
+
+	/**
+	 * @brief Queries the water height at the given actor's position.
+	 * @param a_ref The object reference (typically an actor) to query water height for.
+	 * @param a_pos The world position to check for nearby water objects.
+	 * @return The water surface height, or -NI_INFINITY if no water is found.
+	 */
 	float GetWaterHeight(const RE::TESObjectREFR* a_ref, const RE::NiPoint3& a_pos);
+
+	/**
+	 * @brief Computes per-geometry wetness data (sweat, water submersion, fade) for an actor.
+	 * @param geometry The geometry to retrieve wetness data for.
+	 * @return A float4 containing (sweat, waterWetness, positionZ, waterDepth).
+	 */
 	float4 GetWetness(RE::BSGeometry* geometry);
 
+	/**
+	 * @brief Discovers and loads extra skin textures (RFAOS, wetness) based on the material's texture set.
+	 * @param material The lighting shader material to derive texture paths from.
+	 * @param inTextureSet The texture set to search for extra texture slots.
+	 * @param i_hashKey The material hash key used for caching extra textures.
+	 */
 	void SetupExtraTexture(RE::BSLightingShaderMaterialBase const* material, RE::BSTextureSet* inTextureSet, uint32_t i_hashKey);
+
+	/** @brief Handles material setup for face/face-gen materials, loading extra skin textures as needed. */
 	void BSLightingShader_SetupMaterial(RE::BSLightingShaderMaterialBase const* material);
+
+	/** @brief Updates per-geometry wetness constant buffer during geometry setup. */
 	void BSLightingShader_SetupGeometry(RE::BSRenderPass* a_pass);
+
+	/** @brief Binds extra skin textures (RFAOS, wetness) to pixel shader resource slots. */
 	void SetShaderResources(ID3D11DeviceContext* a_context);
 
 	struct Hooks

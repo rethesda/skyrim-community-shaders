@@ -47,13 +47,9 @@
 #include <map>
 #include <numeric>
 
-// --- Constants ---
 constexpr float kDefaultFPS = 60.0f;
 constexpr float kDefaultFrameTimeMs = 1000.0f / kDefaultFPS;
 
-// --- Helper Structures and Functions ---
-
-// Helper function to create metric columns with consistent formatting
 auto MakeMetricColumn(const auto& theme, auto valueGetter, auto colorGetter, auto formatter, const Util::ColoredTextLines& legend, const Util::ColoredTextLines* cellLegend = nullptr)
 {
 	return [theme, valueGetter, colorGetter, formatter, legend, cellLegend](const DrawCallRow& row, int) {
@@ -86,13 +82,6 @@ auto MakeMetricColumn(const auto& theme, auto valueGetter, auto colorGetter, aut
 	};
 }
 
-// --- Helper Functions ---
-/**
-  * @brief Calculates summary data (Other frame time, percentages, cost per call) from measured sum
-  * @param smoothedFrameTime The total smoothed frame time
-  * @param measuredSum The sum of measured frame times
-  * @return Tuple of (otherFrameTime, otherPercent, totalCostPerCall)
-  */
 static std::tuple<float, float, float> CalculateSummaryData(float smoothedFrameTime, float measuredSum)
 {
 	float totalSmoothedDrawCalls = globals::state->GetTotalSmoothedDrawCalls();
@@ -208,20 +197,16 @@ void PerformanceOverlay::DrawSettings()
 
 void PerformanceOverlay::SaveSettings(json& j)
 {
-	// Persist all overlay settings to JSON
-	j = this->settings;  // uses NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT
+	j = this->settings;
 }
 
 void PerformanceOverlay::LoadSettings(json& j)
 {
 	try {
-		// Load all settings from JSON (missing fields use defaults)
 		this->settings = j.get<PerformanceOverlay::Settings>();
 	} catch (...) {
-		// Fallback to defaults if JSON is invalid
 		this->settings = PerformanceOverlay::Settings{};
 	}
-	// Ensure history buffers match loaded size
 	this->state.frameTimeHistory.Resize(this->settings.FrameHistorySize);
 	this->state.postFGFrameTimeHistory.Resize(this->settings.FrameHistorySize);
 }
@@ -229,7 +214,6 @@ void PerformanceOverlay::LoadSettings(json& j)
 void PerformanceOverlay::RestoreDefaultSettings()
 {
 	this->settings = PerformanceOverlay::Settings{};
-	// Reset runtime buffers/state to match defaults
 	this->state.frameTimeHistory.Resize(this->settings.FrameHistorySize);
 	this->state.postFGFrameTimeHistory.Resize(this->settings.FrameHistorySize);
 	this->state.smoothFps = 0.0f;
@@ -244,7 +228,6 @@ void PerformanceOverlay::RestoreDefaultSettings()
 
 void PerformanceOverlay::DataLoaded()
 {
-	// Initialize performance overlay state
 	REX::W32::QueryPerformanceFrequency(&this->state.frequency);
 	REX::W32::QueryPerformanceCounter(&this->state.lastFrameCounter);
 	this->state.frameTimeHistory.Resize(this->settings.FrameHistorySize);
@@ -271,12 +254,10 @@ void PerformanceOverlay::DrawOverlay()
 		return;
 	}
 
-	// Build draw call rows ONCE per frame and reuse
 	auto [mainRows, summaryRows] = this->BuildDrawCallRows();
 	std::vector<DrawCallRow> allRows = mainRows;
 	allRows.insert(allRows.end(), summaryRows.begin(), summaryRows.end());
 
-	// Set window flags - no decoration and only movable when ShowBorder is true
 	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration;
 
 	// Only allow mouse interaction when the main menu is open
@@ -291,7 +272,6 @@ void PerformanceOverlay::DrawOverlay()
 		windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
 	}
 
-	// Set background opacity
 	ImGui::PushStyleColor(ImGuiCol_WindowBg,
 		ImVec4(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg).x,
 			ImGui::GetStyleColorVec4(ImGuiCol_WindowBg).y,
@@ -302,7 +282,6 @@ void PerformanceOverlay::DrawOverlay()
 
 	const float scale = Util::GetUIScale();
 
-	// Set initial position if not already set
 	if (!this->settings.PositionSet) {
 		const float defaultPad = Settings::kDefaultWindowPadding * scale;
 		ImGui::SetNextWindowPos(ImVec2(defaultPad, defaultPad));
@@ -316,12 +295,9 @@ void PerformanceOverlay::DrawOverlay()
 	bool hasGraphs = this->settings.ShowPreFGFrameTimeGraph ||
 	                 (this->settings.ShowPostFGFrameTimeGraph && this->state.isFrameGenerationActive);
 	if (!hasGraphs) {
-		// Calculate minimum width needed based on actual content
 		float minWidth = 0.0f;
 
-		// Calculate width needed for each enabled section
 		if (this->settings.ShowFPS) {
-			// Measure FPS text width
 			std::string fpsText = std::format("{:.1f} ({:.2f} ms)", this->state.smoothFps, this->state.smoothFrameTimeMs);
 			if (this->state.isFrameGenerationActive) {
 				fpsText = std::format("Raw FPS: {:.1f} ({:.2f} ms)", this->state.smoothFps, this->state.smoothFrameTimeMs);
@@ -338,19 +314,15 @@ void PerformanceOverlay::DrawOverlay()
 
 		minWidth += Settings::kWindowBorderPadding * scale;
 
-		// Set minimum width, but allow auto-resize for larger content
 		ImGui::SetNextWindowSize(ImVec2(minWidth, 0), ImGuiCond_FirstUseEver);
 	}
 
-	// Create the window
 	Util::BeginWithRoundedClose(T(TKEY("overlay_title"), "Performance Overlay"), nullptr, windowFlags);
 
-	// Remember window position for next frame
 	if (ImGui::IsWindowAppearing()) {
 		ImGui::SetWindowPos(this->settings.Position);
 	}
 
-	// Track if window has been moved
 	ImVec2 currentPos = ImGui::GetWindowPos();
 	if (currentPos.x != this->settings.Position.x || currentPos.y != this->settings.Position.y) {
 		this->settings.Position = currentPos;
@@ -359,7 +331,6 @@ void PerformanceOverlay::DrawOverlay()
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4.0f * scale, 1.0f * scale));
 	ImGui::SetWindowFontScale(this->settings.TextSize);
 
-	// Update graph values
 	this->UpdateGraphValues();
 
 	bool needsSeparator = false;
@@ -390,15 +361,14 @@ void PerformanceOverlay::DrawOverlay()
 		needsSeparator = true;
 	}
 
-	ImGui::PopStyleVar();             // ItemSpacing
-	ImGui::SetWindowFontScale(1.0f);  // Reset font scale
+	ImGui::PopStyleVar();
+	ImGui::SetWindowFontScale(1.0f);
 
-	// --- A/B Test Section ---
 	DrawABTestSection(allRows);
 
 	ImGui::End();
-	ImGui::PopStyleVar();    // WindowBorderSize
-	ImGui::PopStyleColor();  // WindowBg
+	ImGui::PopStyleVar();
+	ImGui::PopStyleColor();
 }
 // ============================================================================
 // CORE PERFORMANCE DISPLAY FUNCTIONS
@@ -414,7 +384,6 @@ void PerformanceOverlay::DrawFPS()
 		ImGui::Text(this->state.isFrameGenerationActive ? T(TKEY("raw_fps"), "Raw FPS:") : T(TKEY("fps"), "FPS:"));
 		ImGui::TableNextColumn();
 
-		// Check if buffer is full for the avg
 		auto frameData = this->state.frameTimeHistory.GetData();
 		size_t validFrameCount = std::count_if(frameData.begin(), frameData.end(), [](float ft) { return ft > 0.0f; });
 		bool bufferIsFull = validFrameCount == frameData.size();
@@ -437,19 +406,15 @@ void PerformanceOverlay::DrawFPS()
 		ImGui::EndTable();
 	}
 
-	// Show Pre-FG frametime graph if enabled
 	if (this->settings.ShowPreFGFrameTimeGraph) {
-		// Prepare overlay text
 		char overlay_text[128];
 		snprintf(overlay_text, IM_ARRAYSIZE(overlay_text),
 			"%s%.2f ms (%.1f FPS)",
 			this->state.isFrameGenerationActive ? "Pre-FG: " : "",
 			this->state.smoothFrameTimeMs, this->state.smoothFps);
 
-		// Set graph colors
-		ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));  // Green line
+		ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
 
-		// Draw the graph
 		float graphWidth = ImGui::GetWindowWidth() * 0.9f;
 		ImGui::PlotLines("##frametime",
 			this->state.frameTimeHistory.GetData().data(),
@@ -461,7 +426,6 @@ void PerformanceOverlay::DrawFPS()
 
 		ImGui::PopStyleColor();
 
-		// Draw frametime target reference lines
 		if (ImGui::BeginTable("FrametimeTargets", 3, ImGuiTableFlags_SizingStretchSame)) {
 			ImGui::TableNextColumn();
 			ImGui::Text("30 FPS: 33.3 ms");
@@ -476,20 +440,16 @@ void PerformanceOverlay::DrawFPS()
 		}
 	}
 
-	// Show Post-FG frametime graph if enabled
 	if (this->settings.ShowPostFGFrameTimeGraph && this->state.isFrameGenerationActive) {
-		// Check if FSR frame generation is active (FSR doesn't provide timing data)
 		bool isFrameGenActive = globals::features::upscaling.IsFrameGenerationActive();
 
 		if (isFrameGenActive) {
-			// Show note that FSR uses calculated data
 			Util::Text::Warning("%s", T(TKEY("post_fg_calculated"), "Post-FG: Calculated timing (2x Pre-FG)"));
 			if (auto _tt = Util::HoverTooltipWrapper()) {
 				ImGui::Text("AMD FSR Frame Generation uses calculated timing data (2x Pre-FG).\nNVIDIA DLSS Frame Generation provides measured timing data.");
 			}
 		}
 
-		// Show post-FG graph for both DLSS and FSR (FSR uses calculated data)
 		this->DrawPostFGFrameTimeGraph();
 	}
 }
@@ -505,21 +465,17 @@ void PerformanceOverlay::DrawVRAM()
 	DXGI_QUERY_VIDEO_MEMORY_INFO videoMemoryInfo{};
 	HRESULT hr = dxgiAdapter3->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &videoMemoryInfo);
 
-	// Only proceed if the call succeeded and Budget is not zero
 	if (SUCCEEDED(hr) && videoMemoryInfo.Budget > 0) {
 		float currentGpuUsage = videoMemoryInfo.CurrentUsage / (1024.f * 1024.f * 1024.f);
 		float totalGpuMemory = videoMemoryInfo.Budget / (1024.f * 1024.f * 1024.f);
 		float percent = currentGpuUsage / totalGpuMemory;
 
-		// Center the VRAM text
 		ImGui::Text(T(TKEY("vram_usage"), "VRAM Usage:"));
 
-		// Use a centered text format for the numeric values
 		std::string vramText = std::format("{:.2f}GB/{:.2f}GB ({:.1f}%)", currentGpuUsage, totalGpuMemory, 100 * percent);
 		float textWidth = ImGui::CalcTextSize(vramText.c_str()).x;
 		float windowWidth = ImGui::GetWindowWidth();
 
-		// Center the text if it fits within the window
 		if (textWidth < windowWidth) {
 			ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
 			ImGui::Text("%s", vramText.c_str());
@@ -527,26 +483,21 @@ void PerformanceOverlay::DrawVRAM()
 			ImGui::Text("%s", vramText.c_str());
 		}
 
-		// Only move the progress bar, not the text
 		ImGui::ProgressBar(percent, ImVec2(ImGui::GetWindowWidth() * 0.9f, 0.0f), "");
 	} else {
-		// Display a fallback message if we couldn't get the VRAM info
 		ImGui::Text("%s", T(TKEY("vram_not_available"), "VRAM Usage: Not available"));
 	}
 }
 
 void PerformanceOverlay::DrawPostFGFrameTimeGraph()
 {
-	// Prepare overlay text
 	char overlay_text[128];
 	snprintf(overlay_text, IM_ARRAYSIZE(overlay_text),
 		"Post-FG: %.2f ms (%.1f FPS)",
 		state.postFGSmoothFrameTimeMs, state.postFGSmoothFps);
 
-	// Set graph colors - blue for post-FG
-	ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 0.5f, 1.0f, 1.0f));  // Blue line
+	ImGui::PushStyleColor(ImGuiCol_PlotLines, ImVec4(0.0f, 0.5f, 1.0f, 1.0f));
 
-	// Draw the graph
 	float graphWidth = ImGui::GetWindowWidth() * 0.9f;
 	ImGui::PlotLines("##postfgframetime",
 		state.postFGFrameTimeHistory.GetData().data(),
@@ -558,7 +509,6 @@ void PerformanceOverlay::DrawPostFGFrameTimeGraph()
 
 	ImGui::PopStyleColor();
 
-	// Draw frametime target reference lines
 	if (ImGui::BeginTable("PostFGFrametimeTargets", 3, ImGuiTableFlags_SizingStretchSame)) {
 		ImGui::TableNextColumn();
 		ImGui::Text("30 FPS: 33.3 ms");
@@ -577,29 +527,12 @@ void PerformanceOverlay::DrawPostFGFrameTimeGraph()
 // A/B TESTING FUNCTIONS
 // ============================================================================
 
-// --- ABTestAggregator integration ---
 ABTestAggregator& PerformanceOverlay::GetABTestAggregator()
 {
 	auto* abTestingManager = ABTestingManager::GetSingleton();
 	return abTestingManager->GetAggregator();
 }
 
-/**
-  * @brief Draws the A/B test results table with comprehensive performance comparison
-  *
-  * This function renders a detailed table showing performance metrics for both Variant A (USER config)
-  * and Variant B (TEST config), including:
-  * - Average and median frame times for each shader type
-  * - Performance deltas and percentage differences
-  * - Color-coded indicators for better/worse performance
-  * - Statistical validity assessment with tooltips
-  * - Sortable columns for easy analysis
-  *
-  * The table provides both main rows (individual shader types) and summary rows (Total, Other)
-  * to give users a complete picture of performance differences between configurations.
-  *
-  * @note This function requires an active A/B test with aggregated results
-  */
 void PerformanceOverlay::DrawABTestResultsTable()
 {
 	auto* abTestingManager = ABTestingManager::GetSingleton();
@@ -638,16 +571,6 @@ void PerformanceOverlay::DrawABTestResultsTable()
 		summaryRowsCopy);
 }
 
-/**
-  * @brief Draws statistical validity information for A/B test results
-  *
-  * This function displays test duration, valid frame counts, and exclusion rates
-  * with color-coded indicators for statistical validity. It helps users understand
-  * whether the A/B test results are reliable and statistically significant.
-  *
-  * @param theme The current UI theme settings
-  * @param aggregator The A/B test aggregator containing test statistics
-  */
 void PerformanceOverlay::DrawABTestStatisticalValidity(const Menu::ThemeSettings& theme, const ABTestAggregator& aggregator) const
 {
 	float totalDuration = aggregator.GetTotalTestDuration();
@@ -695,17 +618,6 @@ void PerformanceOverlay::DrawABTestStatisticalValidity(const Menu::ThemeSettings
 	}
 }
 
-/**
-  * @brief Converts A/B test aggregated results into table rows
-  *
-  * This function transforms aggregated A/B test statistics into DrawCallRow structures
-  * suitable for display in the performance overlay table. It separates main shader type
-  * rows from summary rows (Total, Other) and assigns appropriate tooltips.
-  *
-  * @param results The aggregated A/B test results
-  * @param mainRows Output vector for individual shader type rows
-  * @param summaryRows Output vector for summary rows (Total, Other)
-  */
 void PerformanceOverlay::ConvertABTestResultsToRows(const std::vector<AggregatedDrawCallStats>& results, std::vector<DrawCallRow>& mainRows, std::vector<DrawCallRow>& summaryRows) const
 {
 	mainRows.clear();
@@ -749,16 +661,6 @@ void PerformanceOverlay::ConvertABTestResultsToRows(const std::vector<Aggregated
 	}
 }
 
-/**
-  * @brief Builds color-coded legends for A/B test table columns
-  *
-  * This function creates comprehensive tooltip legends for each A/B test column,
-  * explaining the meaning of colors and values. The legends help users understand
-  * performance comparisons between Variant A (USER) and Variant B (TEST) configurations.
-  *
-  * @param theme The current UI theme settings
-  * @return ABTestLegends structure containing all column legends
-  */
 ABTestLegends PerformanceOverlay::BuildABTestLegends(const Menu::ThemeSettings& theme) const
 {
 	ABTestLegends legends;

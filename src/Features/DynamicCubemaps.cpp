@@ -145,7 +145,6 @@ void DynamicCubemaps::PostPostLoad()
 
 RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
-	// When entering a new cell, reset the capture
 	if (a_event->menuName == RE::LoadingMenu::MENU_NAME) {
 		if (!a_event->opening) {
 			auto& dynamicCubemaps = globals::features::dynamicCubemaps;
@@ -360,7 +359,6 @@ void DynamicCubemaps::Inferrence(bool a_reflections)
 	auto renderer = globals::game::renderer;
 	auto context = globals::d3d::context;
 
-	// Infer local reflection information
 	ID3D11UnorderedAccessView* uav = envInferredTexture->uav.get();
 
 	context->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
@@ -399,7 +397,6 @@ void DynamicCubemaps::Irradiance(bool a_reflections)
 {
 	auto context = globals::d3d::context;
 
-	// Copy cubemap to other resources
 	for (uint face = 0; face < 6; face++) {
 		uint srcSubresourceIndex = D3D11CalcSubresource(0, face, MIPLEVELS);
 		context->CopySubresourceRegion(a_reflections ? envReflectionsTexture->resource.get() : envTexture->resource.get(), D3D11CalcSubresource(0, face, MIPLEVELS), 0, 0, 0, envInferredTexture->resource.get(), srcSubresourceIndex, nullptr);
@@ -624,8 +621,6 @@ void DynamicCubemaps::SetupResources()
 		cubemap.SRV->GetDesc(&srvDesc);
 
 		texDesc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
-
-		// Create additional resources
 
 		texDesc.MipLevels = MIPLEVELS;
 		texDesc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
