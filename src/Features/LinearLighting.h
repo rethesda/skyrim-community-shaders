@@ -2,20 +2,15 @@
 
 struct LinearLighting : Feature
 {
-	/** @brief Returns the singleton instance of the LinearLighting feature. */
 	static LinearLighting* GetSingleton()
 	{
 		static LinearLighting singleton;
 		return &singleton;
 	}
 
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Linear Lighting"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.linear_lighting.name", "Linear Lighting"); }
-	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "LinearLighting"; }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
 	/** @brief Returns a localized description and list of key features for the UI summary panel. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
@@ -26,7 +21,6 @@ struct LinearLighting : Feature
 				T("feature.linear_lighting.key_feature_3", "Makes PBR really work") } };
 	};
 
-	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; };
 
 	struct Settings
@@ -109,12 +103,9 @@ struct LinearLighting : Feature
 	/** @brief Draws the ImGui settings UI for gamma correction and lighting multiplier configuration. */
 	virtual void DrawSettings() override;
 
-	/** @brief Loads feature settings from the provided JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves feature settings to the provided JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
-	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 	/** @brief Reads the directional light multiplier from ImageSpaceManager during the prepass. */

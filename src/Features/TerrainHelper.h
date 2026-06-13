@@ -7,15 +7,11 @@ private:
 	static constexpr std::string_view MOD_ID = "143149";
 
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Terrain Helper"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.terrain_helper.name", "Terrain Helper"); }
 	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "TerrainHelper"; }
-	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "TERRAIN_HELPER"; }
-	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLandscapeAndTextures; }
 
 	/** @brief Returns a description and list of key features for the UI summary. */
@@ -49,7 +45,6 @@ public:
 	virtual void DataLoaded() override;
 	/** @brief Installs the BSLightingShader material setup hook after plugin load. */
 	virtual void PostPostLoad() override;
-	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
 
 	/**

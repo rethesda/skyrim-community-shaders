@@ -3,21 +3,14 @@
 struct IBL : Feature
 {
 public:
-	/** @brief Returns true, indicating this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; };
 
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Image Based Lighting"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.ibl.name", "Image Based Lighting"); }
-	/** @brief Returns the short identifier used for file paths and settings keys. */
 	virtual inline std::string GetShortName() override { return "ImageBasedLighting"; }
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "IBL"; }
-	/** @brief Returns the category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
 
-	/** @brief Returns a localized description and key feature bullet points for the UI. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.ibl.description", "Replaces the game's ambient lighting with physically-based IBL derived from cubemap spherical harmonics."),
@@ -28,21 +21,17 @@ public:
 				T("feature.ibl.key_feature_5", "Static IBL fallback textures for out-of-world objects (e.g. inventory items)") } };
 	};
 
-	/** @brief Returns true for all shader types, enabling IBL defines globally. */
 	bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
 	Texture2D* envIBLTexture = nullptr;
 	Texture2D* skyIBLTexture = nullptr;
 	ID3D11ComputeShader* diffuseIBLCS = nullptr;
 
-	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 	/** @brief Draws the ImGui settings UI for IBL intensity, saturation, DALC, and fog options. */
 	virtual void DrawSettings() override;
 
-	/** @brief Loads IBL settings from JSON. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves IBL settings to JSON. */
 	virtual void SaveSettings(json& o_json) override;
 	/** @brief Registers IBL parameters as weather-interpolatable variables. */
 	virtual void RegisterWeatherVariables() override;

@@ -7,15 +7,11 @@
 struct TerrainShadows : public Feature
 {
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Terrain Shadows"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.terrain_shadows.name", "Terrain Shadows"); }
 	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "TerrainShadows"; }
-	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "TERRAIN_SHADOWS"; }
-	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLandscapeAndTextures; }
 	/** @brief Returns a description and list of key features for the UI summary. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
@@ -28,7 +24,6 @@ public:
 				T("feature.terrain_shadows.key_feature_5", "Integration with existing shadow systems") } };
 	};
 
-	/** @brief Indicates whether this feature injects shader defines for the given shader type. */
 	virtual inline bool HasShaderDefine(RE::BSShader::Type) override { return true; }
 
 	struct Settings
@@ -111,15 +106,11 @@ public:
 	/** @brief Binds the shadow height texture to shader resource slots for reflection rendering. */
 	virtual void ReflectionsPrepass() override;
 
-	/** @brief Loads terrain shadow settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves current terrain shadow settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
-	/** @brief Restores all terrain shadow settings to their default values. */
 	virtual inline void RestoreDefaultSettings() override { settings = {}; }
 	/** @brief Releases the cached shadow update compute shader and recompiles it. */
 	virtual void ClearShaderCache() override;
-	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; };
 };

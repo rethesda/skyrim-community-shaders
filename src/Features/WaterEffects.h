@@ -7,15 +7,11 @@ struct WaterEffects : Feature
 {
 public:
 	winrt::com_ptr<ID3D11ShaderResourceView> causticsView;
-	/** @brief Returns the internal feature name. */
 	virtual inline std::string GetName() override { return "Water Effects"; }
-	/** @brief Returns the user-facing display name. */
 	virtual std::string GetDisplayName() override { return T("feature.water_effects.name", "Water Effects"); }
 	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "WaterEffects"; }
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "WATER_EFFECTS"; }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kWater; }
 
 	/** @brief Returns a summary description and list of key features for the UI. */
@@ -29,7 +25,6 @@ public:
 				T("feature.water_effects.key_feature_5", "Atmospheric underwater effects") } };
 	};
 
-	/** @brief Returns whether this feature injects shader defines for the given shader type. */
 	bool HasShaderDefine(RE::BSShader::Type shaderType) override;
 
 	/** @brief Loads the water caustics DDS texture from disk. */
@@ -38,6 +33,5 @@ public:
 	/** @brief Binds the caustics texture SRV to the pixel shader for the current frame. */
 	virtual void Prepass() override;
 
-	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; };
 };

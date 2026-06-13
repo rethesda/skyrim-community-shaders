@@ -77,15 +77,11 @@ public:
 	ID3D11ComputeShader* burleySS = nullptr;
 	RE::BGSKeyword* isBeastRaceKeyword = nullptr;
 
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Subsurface Scattering"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.subsurface_scattering.name", "Subsurface Scattering"); }
 	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "SubsurfaceScattering"; }
-	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "SSS"; }
-	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kCharacters; }
 
 	/** @brief Returns a description and list of key features for the UI summary. */
@@ -99,14 +95,12 @@ public:
 				T("feature.subsurface_scattering.key_feature_5", "Configurable scattering properties") } };
 	};
 
-	/** @brief Indicates whether this feature injects shader defines for the given shader type. */
 	bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
 	/** @brief Creates GPU resources including constant buffers and temporary render textures. */
 	virtual void SetupResources() override;
 	/** @brief Resets per-frame state including character lighting and kernel recalculation. */
 	virtual void Reset() override;
-	/** @brief Restores all SSS settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 	/** @brief Draws the ImGui settings panel for Subsurface Scattering configuration. */
@@ -139,9 +133,7 @@ public:
 	/** @brief Dispatches the SSS blur compute shaders (prepass, horizontal, vertical or Burley). */
 	void DrawSSS();
 
-	/** @brief Loads SSS settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves current SSS settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
 	/** @brief Releases all cached compute shaders for recompilation. */

@@ -4,18 +4,14 @@
 struct InverseSquareLighting : Feature
 {
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Inverse Square Lighting"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.inverse_square_lighting.name", "Inverse Square Lighting"); }
 
 	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "InverseSquareLighting"; }
 
-	/** @brief Returns the shader preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "ISL"; }
 
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
 
 	/** @brief Returns a localized description and list of key features for the UI summary panel. */
@@ -29,7 +25,6 @@ public:
 				T("feature.inverse_square_lighting.key_feature_5", "Full integration with Light Placer") } };
 	}
 
-	/** @brief Indicates this feature injects a shader define for all shader types. */
 	inline bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
 
@@ -76,7 +71,6 @@ public:
 		static float thunk(RE::BSLight* bsLight, RE::NiPoint3* targetPosition, RE::NiLight* refLight);
 		static inline REL::Relocation<decltype(thunk)> func;
 	};
-	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; };
 
 private:

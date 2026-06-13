@@ -7,17 +7,12 @@ private:
 	static constexpr std::string_view MOD_ID = "157076";
 
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Terrain Blending"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.terrain_blending.name", "Terrain Blending"); }
 	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "TerrainBlending"; }
-	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
-	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "TERRAIN_BLENDING"; }
-	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLandscapeAndTextures; }
 	/** @brief Returns a description and list of key features for the UI summary. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
@@ -30,7 +25,6 @@ public:
 				T("feature.terrain_blending.key_feature_5", "Enhanced visual continuity in landscape interactions") } };
 	};
 
-	/** @brief Indicates whether this feature injects shader defines for the given shader type. */
 	virtual inline bool HasShaderDefine(RE::BSShader::Type) override { return true; }
 
 	struct Settings
@@ -44,9 +38,7 @@ public:
 
 	/** @brief Draws the ImGui settings panel for Terrain Blending configuration. */
 	virtual void DrawSettings() override;
-	/** @brief Loads terrain blending settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves current terrain blending settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
 	/** @brief Creates GPU resources including depth textures, blended depth buffers, and stencil states. */

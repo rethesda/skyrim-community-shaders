@@ -9,15 +9,10 @@ private:
 
 public:
 
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Screen Space GI"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.screen_space_gi.name", "Screen Space GI"); }
-	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "ScreenSpaceGI"; }
-	/** @brief Returns the Nexus Mods URL for this feature's mod page. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
 
 	/** @brief Returns a localized description and list of key features for the UI summary panel. */
@@ -37,9 +32,7 @@ public:
 	/** @brief Draws the ImGui settings UI with quality presets, visual parameters, and denoising options. */
 	virtual void DrawSettings() override;
 
-	/** @brief Loads feature settings from the provided JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves feature settings to the provided JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
 	/** @brief Creates GPU textures, samplers, constant buffers, and compiles compute shaders. */

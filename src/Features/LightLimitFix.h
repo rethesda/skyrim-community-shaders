@@ -6,15 +6,10 @@
 struct LightLimitFix : OverlayFeature
 {
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Light Limit Fix"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.light_limit_fix.name", "Light Limit Fix"); }
-	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "LightLimitFix"; }
-	/** @brief Returns the shader preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "LIGHT_LIMIT_FIX"; }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
 
 	/** @brief Returns a localized description and list of key features for the UI summary panel. */
@@ -27,7 +22,6 @@ public:
 				T("feature.light_limit_fix.key_feature_4", "Enhanced visual realism") } };
 	};
 
-	/** @brief Indicates this feature injects a shader define for all shader types. */
 	bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
 	/** @brief Flags describing light properties for clustered rendering. */
@@ -153,7 +147,6 @@ public:
 	/** @brief Creates GPU buffers, compute shaders, and constant buffers for clustered lighting. */
 	virtual void SetupResources() override;
 
-	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 	/** @brief Draws the ImGui settings UI for light limit fix configuration and debug visualization. */
@@ -276,7 +269,6 @@ public:
 		}
 	};
 
-	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; }
 };
 

@@ -24,13 +24,10 @@ public:
 
 	Settings settings;
 
-	/** @brief Returns the internal feature name. */
 	virtual inline std::string GetName() override { return "Volumetric Lighting"; }
-	/** @brief Returns the user-facing display name. */
 	virtual std::string GetDisplayName() override { return T("feature.volumetric_lighting.name", "Volumetric Lighting"); }
 	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "VolumetricLighting"; }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
 
 	/** @brief Returns a summary description and list of key features for the UI. */
@@ -44,11 +41,8 @@ public:
 				T("feature.volumetric_lighting.key_feature_5", "Enhanced atmospheric immersion") } };
 	};
 
-	/** @brief Saves feature settings to the JSON configuration. */
 	virtual void SaveSettings(json&) override;
-	/** @brief Loads feature settings from the JSON configuration. */
 	virtual void LoadSettings(json&) override;
-	/** @brief Restores all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 	/** @brief Draws the ImGui settings panel for volumetric lighting configuration. */
 	virtual void DrawSettings() override;
@@ -61,7 +55,6 @@ public:
 	/** @brief Updates screen dimensions, detects interior/exterior transitions, and configures VL quality. */
 	virtual void EarlyPrepass() override;
 
-	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; };
 
 	/**

@@ -6,17 +6,12 @@
 struct VolumetricShadows : Feature
 {
 public:
-	/** @brief Returns the internal feature name. */
 	virtual inline std::string GetName() override { return "Volumetric Shadows"; }
-	/** @brief Returns the user-facing display name. */
 	virtual std::string GetDisplayName() override { return T("feature.volumetric_shadows.name", "Volumetric Shadows"); }
 	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "VolumetricShadows"; }
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "VOLUMETRIC_SHADOWS"; }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
-	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; }
 	/** @brief Indicates this feature appears in the settings menu. */
 	virtual bool IsInMenu() const override { return true; }
@@ -33,7 +28,6 @@ public:
 				T("feature.volumetric_shadows.key_feature_4", "Optimized for effects rendering") } };
 	};
 
-	/** @brief Returns whether this feature injects shader defines for the given shader type. */
 	bool HasShaderDefine(RE::BSShader::Type shaderType) override;
 
 	// Compute shaders
@@ -74,11 +68,8 @@ public:
 	/** @brief Copies and downsamples the directional shadow map, then applies Gaussian blur filtering. */
 	void CopyShadowLightData();
 
-	/** @brief Loads feature settings from the JSON configuration. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves feature settings to the JSON configuration. */
 	virtual void SaveSettings(json& o_json) override;
-	/** @brief Restores all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 	/** @brief Installs the engine hook for binding the shared shadow map SRV. */

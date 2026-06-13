@@ -5,22 +5,16 @@
 /** @brief Advanced skin rendering feature with dual specular lobes, detail textures, and wetness effects. */
 struct Skin : Feature
 {
-	/** @brief Returns the singleton instance of the Skin feature. */
 	static Skin* GetSingleton()
 	{
 		static Skin singleton;
 		return &singleton;
 	}
 
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Advanced Skin"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual inline std::string GetDisplayName() override { return T("feature.skin.name", "Advanced Skin"); }
-	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "Skin"; }
-	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "CS_SKIN"; }
-	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kCharacters; }
 	/** @brief Returns a description and list of key features for the UI summary. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
@@ -33,21 +27,17 @@ struct Skin : Feature
 				T("feature.skin.key_feature_4", "Reworked wetness system for dynamic skin effects") }
 		};
 	}
-	/** @brief Indicates whether this feature injects shader defines for the given shader type. */
 	virtual inline bool HasShaderDefine(RE::BSShader::Type t) override
 	{
 		return t == RE::BSShader::Type::Lighting;
 	};
 
 
-	/** @brief Restores all skin settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 	/** @brief Draws the ImGui settings panel for Advanced Skin configuration. */
 	virtual void DrawSettings() override;
 
-	/** @brief Loads skin settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves current skin settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
 	/** @brief Binds the skin detail texture to the pixel shader during the prepass stage. */

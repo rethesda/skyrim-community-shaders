@@ -19,7 +19,6 @@ struct Feature
 		std::string featureName;
 	};
 
-	/** @brief Returns searchable entries for this feature's settings. */
 	virtual std::vector<SettingSearchEntry> GetSettingsSearchEntries() { return {}; }
 
 	static constexpr std::string_view NEXUS_BASE_URL = "https://www.nexusmods.com/skyrimspecialedition/mods/";
@@ -27,22 +26,11 @@ struct Feature
 	std::string version;
 	std::string failedLoadedMessage;
 
-	/** @brief Gets the internal name of this feature. */
 	virtual std::string GetName() = 0;
-
-	/** @brief Gets the abbreviated name used for INI files and lookup keys. */
 	virtual std::string GetShortName() = 0;
-
-	/** @brief Gets the user-facing display name; defaults to GetName(). */
 	virtual std::string GetDisplayName() { return GetName(); }
-
-	/** @brief Gets the localized display category string for UI grouping. */
 	std::string GetDisplayCategory() const;
-
-	/** @brief Gets the Nexus Mods URL for this feature's standalone mod page. */
 	virtual std::string GetFeatureModLink() { return ""; }
-
-	/** @brief Gets the preprocessor define name injected when this feature is active. */
 	virtual std::string_view GetShaderDefineName() { return ""; }
 
 	/** @brief Gets additional shader define key-value pairs for this feature. */
@@ -60,7 +48,6 @@ protected:
 	}
 
 public:
-	/** @brief Returns whether this feature injects a shader define for the given shader type. */
 	virtual bool HasShaderDefine(RE::BSShader::Type) { return false; }
 
 	/**
@@ -111,7 +98,6 @@ public:
 	/** @brief Releases and recreates transient state (e.g. on resolution change). */
 	virtual void Reset() {}
 
-	/** @brief Draws the ImGui settings panel for this feature. */
 	virtual void DrawSettings() {}
 
 	/** @brief Draws the UI shown when this feature failed to load. */
@@ -156,16 +142,9 @@ public:
 	 */
 	void Load(json& o_json);
 
-	/** @brief Serializes this feature's settings into the given JSON object. */
 	void Save(json& o_json);
-
-	/** @brief Serializes feature-specific settings to JSON. */
 	virtual void SaveSettings(json&) {}
-
-	/** @brief Deserializes feature-specific settings from JSON. */
 	virtual void LoadSettings(json&) {}
-
-	/** @brief Resets all settings to their compiled-in defaults. */
 	virtual void RestoreDefaultSettings() {}
 
 	/**
@@ -238,7 +217,6 @@ public:
 	/** @brief Invalidates any cached compiled shaders owned by this feature. */
 	virtual void ClearShaderCache() {}
 
-	/** @brief Returns the global list of all registered feature instances. */
 	static const std::vector<Feature*>& GetFeatureList();
 
 	/**

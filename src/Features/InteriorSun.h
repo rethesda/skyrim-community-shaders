@@ -4,15 +4,10 @@
 struct InteriorSun : Feature
 {
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Interior Sun"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.interior_sun.name", "Interior Sun"); }
-	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "InteriorSun"; }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
-	/** @brief Returns a localized description and list of key features for the UI summary panel. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.interior_sun.description", "Allows for the sun and moon to cast light and shadows into interior spaces."),
@@ -24,11 +19,8 @@ public:
 
 	/** @brief Draws the ImGui settings UI for Interior Sun configuration. */
 	virtual void DrawSettings() override;
-	/** @brief Loads feature settings from the provided JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves feature settings to the provided JSON object. */
 	virtual void SaveSettings(json& o_json) override;
-	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 	/** @brief Installs rendering hooks and patches for interior sun/shadow support. */
 	virtual void PostPostLoad() override;
@@ -123,7 +115,6 @@ public:
 	static bool IsInteriorWithSun(const RE::TESObjectCELL* cell);
 	/** @brief Returns whether this feature is loaded and the current cell has interior sun enabled. */
 	bool IsActiveInteriorSun() const { return loaded && isInteriorWithSun.load(); }
-	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; };
 
 private:

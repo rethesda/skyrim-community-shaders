@@ -8,18 +8,12 @@ private:
 	static constexpr std::string_view MOD_ID = "180146";
 
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Exponential Height Fog"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.exponential_height_fog.name", "Exponential Height Fog"); }
-	/** @brief Returns the short identifier used for file paths and settings keys. */
 	virtual inline std::string GetShortName() override { return "ExponentialHeightFog"; }
-	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
-	/** @brief Returns the category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
 
-	/** @brief Returns a localized description and key feature bullet points for the UI. */
 	virtual inline std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.exponential_height_fog.description", "Exponential Height Fog adds a realistic fog effect that increases in density with height, enhancing atmospheric depth and immersion in the game environment."),
@@ -28,9 +22,7 @@ public:
 				T("feature.exponential_height_fog.key_feature_3", "Creates atmospheric depth") } };
 	};
 
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "EXP_HEIGHT_FOG"; }
-	/** @brief Returns true for all shader types, enabling fog defines globally. */
 	bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
 	/** @brief Draws the ImGui settings UI for fog parameters and volumetric fog options. */
@@ -45,11 +37,8 @@ public:
 	 */
 	virtual void Prepass() override;
 
-	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
-	/** @brief Loads exponential height fog settings from JSON. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves exponential height fog settings to JSON. */
 	virtual void SaveSettings(json& o_json) override;
 
 	/** @brief Registers all fog parameters as weather-interpolatable variables. */

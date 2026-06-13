@@ -7,24 +7,18 @@ private:
 	static constexpr std::string_view MOD_ID = "148123";
 
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Terrain Variation"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.terrain_variation.name", "Terrain Variation"); }
 	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "TerrainVariation"; }
-	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
-	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "TERRAIN_VARIATION"; }
-	/** @brief Indicates whether this feature injects shader defines for the given shader type. */
+	/** @brief Returns true only for Lighting shader type. */
 	virtual inline bool HasShaderDefine(RE::BSShader::Type shaderType) override
 	{
 		return (shaderType == RE::BSShader::Type::Lighting);
 	}
-	/** @brief Indicates this is not a core feature. */
 	virtual bool IsCore() const override { return false; };
-	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLandscapeAndTextures; }
 
 	/** @brief Returns a description and list of key features for the UI summary. */
@@ -48,11 +42,8 @@ public:
 	virtual void DrawSettings() override;
 	/** @brief Suppresses the default failed-load message display. */
 	virtual bool DrawFailLoadMessage() const override;
-	/** @brief Loads terrain variation settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves current terrain variation settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
-	/** @brief Restores all terrain variation settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 	/** @brief Initializes the feature and applies shader settings after plugin load. */

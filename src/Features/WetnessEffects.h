@@ -9,17 +9,12 @@ private:
 	static constexpr std::string_view MOD_ID = "112739";
 
 public:
-	/** @brief Returns the internal feature name. */
 	virtual inline std::string GetName() override { return "Wetness Effects"; }
-	/** @brief Returns the user-facing display name. */
 	virtual std::string GetDisplayName() override { return T("feature.wetness_effects.name", "Wetness Effects"); }
 	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "WetnessEffects"; }
-	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "WETNESS_EFFECTS"; }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kWater; }
 
 	/** @brief Returns a summary description and list of key features for the UI. */
@@ -33,7 +28,6 @@ public:
 				T("feature.wetness_effects.key_feature_5", "Support for skin wetness and material-specific responses") } };
 	};
 
-	/** @brief Indicates that this feature injects shader defines for all shader types. */
 	bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
 	struct Settings
@@ -126,12 +120,9 @@ public:
 	/** @brief Draws the ImGui settings panel for wetness effects configuration. */
 	virtual void DrawSettings() override;
 
-	/** @brief Loads feature settings from the JSON configuration. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves feature settings to the JSON configuration. */
 	virtual void SaveSettings(json& o_json) override;
 
-	/** @brief Restores all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 	/** @brief Returns the weather analysis configuration for the debug weather analysis panel. */

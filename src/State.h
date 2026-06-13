@@ -34,7 +34,6 @@ public:
 	/** @brief Acquires the stats mutex and returns a scoped lock guard. */
 	std::lock_guard<std::mutex> Lock() { return std::lock_guard<std::mutex>(statsMutex); }
 
-	/** @brief Returns the global State singleton. */
 	static State* GetSingleton()
 	{
 		static State singleton;
@@ -130,7 +129,6 @@ public:
 	 * @param a_level The spdlog severity level to apply.
 	 */
 	void SetLogLevel(spdlog::level::level_enum a_level = spdlog::level::info);
-	/** @brief Gets the current log level. */
 	spdlog::level::level_enum GetLogLevel();
 
 	/**
@@ -138,7 +136,6 @@ public:
 	 * @param defines Semicolon-separated define string (e.g. "FOO=1;BAR=2").
 	 */
 	void SetDefines(std::string defines);
-	/** @brief Gets the parsed shader defines list. */
 	std::vector<std::pair<std::string, std::string>>* GetDefines();
 
 	/**

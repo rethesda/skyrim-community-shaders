@@ -5,15 +5,10 @@
 struct ScreenSpaceShadows : Feature
 {
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Screen Space Shadows"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.screen_space_shadows.name", "Screen Space Shadows"); }
-	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "ScreenSpaceShadows"; }
-	/** @brief Returns the shader preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "SCREEN_SPACE_SHADOWS"; }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
 
 	/** @brief Returns a localized description and list of key features for the UI summary panel. */
@@ -27,7 +22,6 @@ public:
 				T("feature.screen_space_shadows.key_feature_5", "Configurable shadow contrast") } };
 	}
 
-	/** @brief Returns whether this feature injects a shader define for the given shader type. */
 	bool HasShaderDefine(RE::BSShader::Type shaderType) override;
 
 	struct BendSettings
@@ -92,15 +86,12 @@ public:
 	/** @brief Clears the shadow texture and dispatches shadow ray marching if conditions are met. */
 	virtual void Prepass() override;
 
-	/** @brief Loads feature settings from the provided JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves feature settings to the provided JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
 	/** @brief Dispatches the Bend SSS compute shader to generate screen-space contact shadows. */
 	void DrawShadows();
 
-	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 };

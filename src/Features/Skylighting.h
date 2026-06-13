@@ -8,17 +8,11 @@ private:
 
 public:
 
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Skylighting"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.skylighting.name", "Skylighting"); }
-	/** @brief Returns the short identifier name. */
 	virtual inline std::string GetShortName() override { return "Skylighting"; }
-	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
-	/** @brief Returns the shader preprocessor define name. */
 	virtual inline std::string_view GetShaderDefineName() override { return "SKYLIGHTING"; }
-	/** @brief Returns the feature category for menu organization. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kLighting; }
 	/** @brief Returns a description and list of key features for the UI summary. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
@@ -31,17 +25,13 @@ public:
 				T("feature.skylighting.key_feature_5", "Integration with existing lighting systems") } };
 	};
 
-	/** @brief Indicates whether this feature injects shader defines for the given shader type. */
 	virtual bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
-	/** @brief Restores all skylighting settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 	/** @brief Draws the ImGui settings panel for Skylighting configuration. */
 	virtual void DrawSettings() override;
 
-	/** @brief Loads skylighting settings from a JSON object. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves current skylighting settings to a JSON object. */
 	virtual void SaveSettings(json& o_json) override;
 
 	/** @brief Creates GPU resources including occlusion textures, probe arrays, and samplers. */

@@ -138,17 +138,11 @@ public:
 	/** @brief Binds the BC6H-compressed cubemap textures as pixel shader resources after deferred rendering. */
 	void PostDeferred();
 
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Dynamic Cubemaps"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.dynamic_cubemaps.name", "Dynamic Cubemaps"); }
-	/** @brief Returns the short identifier used for file paths and settings keys. */
 	virtual inline std::string GetShortName() override { return "DynamicCubemaps"; }
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "DYNAMIC_CUBEMAPS"; }
-	/** @brief Returns the category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kMaterials; }
-	/** @brief Returns a localized description and key feature bullet points for the UI. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.dynamic_cubemaps.description", "Provides real-time environment mapping and reflections by generating dynamic cube maps that capture the surrounding environment, enabling realistic reflections on surfaces."),
@@ -161,7 +155,6 @@ public:
 	/** @brief Returns additional shader define options based on current settings (e.g., ENABLESSR). */
 	virtual std::vector<std::pair<std::string_view, std::string_view>> GetShaderDefineOptions() override;
 
-	/** @brief Returns true for all shader types, enabling dynamic cubemap defines globally. */
 	bool HasShaderDefine(RE::BSShader::Type) override { return true; };
 
 	/** @brief Creates all GPU resources: textures, UAVs, constant buffers, samplers, and BC6H scratch buffers. */
@@ -169,7 +162,6 @@ public:
 	/** @brief Resets reflection state each frame based on sky visibility and interior status. */
 	virtual void Reset() override;
 
-	/** @brief Saves dynamic cubemap settings to JSON. */
 	virtual void SaveSettings(json&) override;
 	/** @brief Loads dynamic cubemap settings from JSON and flags shaders for recompilation. */
 	virtual void LoadSettings(json&) override;
@@ -228,6 +220,5 @@ public:
 	/** @brief Returns the BC6H block encoder compute shader, compiling it on first use. */
 	ID3D11ComputeShader* GetComputeShaderBC6HEncode();
 
-	/** @brief Returns true, indicating this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; };
 };

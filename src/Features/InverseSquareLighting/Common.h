@@ -1,17 +1,14 @@
 ﻿#pragma once
 #include "Features/LightLimitFix.h"
 
-/** @brief Shared data structures and helpers for the Inverse Square Lighting system. */
 struct ISLCommon
 {
-	/** @brief Extended light form flags for inverse-square and linear falloff modes. */
 	enum class TES_LIGHT_FLAGS_EXT
 	{
 		kInverseSquare = 1 << 14,
 		kLinear = 1 << 15
 	};
 
-	/** @brief Runtime extension data stored in the NiLight's light runtime data region for ISL parameters. */
 	struct RuntimeLightDataExt
 	{
 		stl::enumeration<LightLimitFix::LightFlags> flags;

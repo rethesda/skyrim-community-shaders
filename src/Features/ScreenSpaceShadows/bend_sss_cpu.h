@@ -51,9 +51,7 @@ namespace Bend
 		int DispatchCount;         // Number of compute dispatches written to the list
 	};
 
-	/** @brief Returns the smaller of two integers. */
 	inline int bend_min(const int a, const int b) { return a > b ? b : a; }
-	/** @brief Returns the larger of two integers. */
 	inline int bend_max(const int a, const int b) { return a > b ? a : b; }
 
 	/**

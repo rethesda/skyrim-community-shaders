@@ -5,18 +5,12 @@
 struct GrassCollision : Feature
 {
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Grass Collision"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.grass_collision.name", "Grass Collision"); }
-	/** @brief Returns the short identifier used for file paths and settings keys. */
 	virtual inline std::string GetShortName() override { return "GrassCollision"; }
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "GRASS_COLLISION"; }
-	/** @brief Returns the category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kGrass; }
 
-	/** @brief Returns a localized description and key feature bullet points for the UI. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.grass_collision.description", "Enables dynamic grass interactions where grass bends and moves in response to actors walking through it, creating more immersive environmental reactions."),
@@ -102,12 +96,8 @@ public:
 	 */
 	void Update();
 
-	/** @brief Loads grass collision settings from JSON. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves grass collision settings to JSON. */
 	virtual void SaveSettings(json& o_json) override;
-
-	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 	/** @brief Installs the BSGrassShader and main update hooks after all plugins have loaded. */

@@ -8,15 +8,11 @@
 /** @brief Replaces distant water tiles with LOD0 water to eliminate water LOD mismatch. */
 struct UnifiedWater : OverlayFeature
 {
-	/** @brief Returns the internal feature name. */
 	virtual inline std::string GetName() override { return "Unified Water"; }
-	/** @brief Returns the user-facing display name. */
 	virtual std::string GetDisplayName() override { return T("feature.unified_water.name", "Unified Water"); }
 	/** @brief Returns the short identifier used for file paths and logging. */
 	virtual inline std::string GetShortName() override { return "UnifiedWater"; }
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "UNIFIED_WATER"; }
-	/** @brief Returns the UI category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kWater; }
 	/** @brief Returns a summary description and list of key features for the UI. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
@@ -28,7 +24,6 @@ struct UnifiedWater : OverlayFeature
 				T("feature.unified_water.key_feature_4", "Improves vanilla performance by using optimized water meshes for distant water.") } };
 	};
 
-	/** @brief Indicates that this feature injects shader defines for all shader types. */
 	virtual inline bool HasShaderDefine(RE::BSShader::Type) override { return true; }
 
 	struct Settings
@@ -123,15 +118,11 @@ struct UnifiedWater : OverlayFeature
 	/** @brief Handles post-data-load initialization including flowmap and cache setup. */
 	virtual void DataLoaded() override;
 
-	/** @brief Loads feature settings from the JSON configuration. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves feature settings to the JSON configuration. */
 	virtual void SaveSettings(json& o_json) override;
 
-	/** @brief Restores all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
-	/** @brief Indicates this is a core feature bundled with the main mod. */
 	virtual bool IsCore() const override { return true; }
 	/** @brief Indicates this feature is disabled by default and must be opted into. */
 	virtual bool IsDisabledByDefault() const override { return true; }

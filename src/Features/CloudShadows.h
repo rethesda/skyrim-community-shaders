@@ -14,19 +14,12 @@ public:
 
 	Settings settings;
 
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "Cloud Shadows"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.cloud_shadows.name", "Cloud Shadows"); }
-	/** @brief Returns the short identifier used for file paths and settings keys. */
 	virtual inline std::string GetShortName() override { return "CloudShadows"; }
-	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
-	/** @brief Returns the category this feature belongs to. */
 	virtual std::string_view GetCategory() const override { return FeatureCategories::kSky; }
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "CLOUD_SHADOWS"; }
-	/** @brief Returns a localized description and key feature bullet points for the UI. */
 	virtual std::pair<std::string, std::vector<std::string>> GetFeatureSummary() override
 	{
 		return { T("feature.cloud_shadows.description", "Adds realistic cloud shadows that move across the landscape, creating dynamic lighting changes as clouds pass overhead, enhancing atmospheric immersion."),
@@ -37,7 +30,6 @@ public:
 				T("feature.cloud_shadows.key_feature_5", "Enhanced sky rendering integration") } };
 	};
 
-	/** @brief Returns true for all shader types, enabling cloud shadow defines globally. */
 	virtual inline bool HasShaderDefine(RE::BSShader::Type) override { return true; }
 
 	bool overrideSky = false;
@@ -63,12 +55,8 @@ public:
 	/** @brief Draws the ImGui settings UI for cloud shadow opacity. */
 	virtual void DrawSettings() override;
 
-	/** @brief Loads cloud shadow settings from JSON. */
 	virtual void LoadSettings(json& o_json) override;
-	/** @brief Saves cloud shadow settings to JSON. */
 	virtual void SaveSettings(json& o_json) override;
-
-	/** @brief Resets all settings to their default values. */
 	virtual void RestoreDefaultSettings() override;
 
 	/**
