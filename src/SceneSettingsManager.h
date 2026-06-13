@@ -18,7 +18,8 @@ struct Feature;
  *
  * Zero coupling to individual features -- operates via JSON round-trip through
  * Feature::SaveSettings/LoadSettings.
- * Event-driven: cell transitions detected via MenuOpenCloseEvent, mutations applied immediately.
+ * Event-driven: cell transitions detected via MenuOpenCloseEvent; settings mutations are applied
+ * on the next frame once cell data is available (deferred by SceneSettingsManager::Update()).
  */
 class SceneSettingsManager
 {

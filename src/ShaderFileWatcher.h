@@ -59,7 +59,7 @@ namespace SIE
 		}
 
 		/**
-		 * @brief Returns all .hlsl files that transitively include the given file.
+		 * @brief Returns all .hlsl files that directly include the given file.
 		 * @param hlsliFile Path to the include file.
 		 * @return Paths of .hlsl files that depend on hlsliFile.
 		 */
