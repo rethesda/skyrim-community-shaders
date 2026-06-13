@@ -128,7 +128,7 @@ public:
 	/** @brief Saves current theme settings to a JSON object */
 	void SaveTheme(json& o_json);
 
-	/** @brief Scans the themes directory and returns available theme preset names */
+	// Multi-theme support
 	std::vector<std::string> DiscoverThemes();
 	/**
 	 * @brief Loads a theme preset by name from the themes directory.
@@ -144,7 +144,8 @@ public:
 	/** @brief Draws the main settings window with all tabs and feature panels */
 	void DrawSettings();
 
-	std::string featureSearch;
+	// Search bar state
+	std::string featureSearch;  // For left pane feature search
 	/** @brief Draws the in-game performance/debug overlay */
 	void DrawOverlay();
 	/** @brief Draws the detached weather details editor window */
@@ -164,17 +165,20 @@ public:
 	std::string BuildFontSignature(float baseFontSize) const;
 
 public:
+	// Input handling flags (made public for InputEventHandler access)
 	bool settingToggleKey = false;
 	bool settingSkipCompilationKey = false;
 	bool settingsEffectsToggle = false;
 	bool settingOverlayToggleKey = false;
-	bool settingShaderBlockPrevKey = false;
-	bool settingShaderBlockNextKey = false;
-	bool settingCSEditorToggleKey = false;
-	bool settingScreenshotKey = false;
+	bool settingShaderBlockPrevKey = false;      // Debug: capture shader block prev key
+	bool settingShaderBlockNextKey = false;      // Debug: capture shader block next key
+	bool settingCSEditorToggleKey = false;  // CS Editor toggle key
+	bool settingScreenshotKey = false;           // Screenshot capture key
 
-	float cachedFontSize = ThemeManager::Constants::DEFAULT_FONT_SIZE;
-	mutable std::string cachedFontName = "Jost/Jost-Regular.ttf";
+	// Font caching (made public for ThemeManager and OverlayRenderer access)
+	// Marked mutable because they're cache fields that may be updated from const methods
+	float cachedFontSize = ThemeManager::Constants::DEFAULT_FONT_SIZE;  // Tracks whether font has been modified and may require reloading
+	mutable std::string cachedFontName = "Jost/Jost-Regular.ttf";       // Tracks whether font file has changed and may require reloading
 	std::array<std::string, static_cast<size_t>(FontRole::Count)> cachedFontFilesByRole = []() {
 		std::array<std::string, static_cast<size_t>(FontRole::Count)> files{};
 		auto setFile = [&files](FontRole role, std::string value) {
@@ -191,14 +195,16 @@ public:
 	std::string cachedFontSignature;
 	mutable std::array<ImFont*, static_cast<size_t>(FontRole::Count)> loadedFontRoles = {};
 
+	// Deferred reload systems (public for SettingsTabRenderer access)
 	bool pendingFontReload = false;
 	bool pendingIconReload = false;
 	bool pendingCursorReload = false;
 
+	// Display size tracking for cross-session resolution change detection
 	float2 lastDisplaySize{};
 	bool resetLayout = false;
 
-	// Alt-tab can leave modifier keys stuck; this flag triggers a reset on next frame
+	// Used for resetting input keys to solve alt-tab stuck issue
 	std::atomic<bool> focusChanged = false;
 	/** @brief Called on window focus change to reset stuck modifier key state */
 	void OnFocusChanged();
@@ -208,6 +214,7 @@ public:
 		static constexpr std::uint16_t KEY_PRESSED_MASK = 0x8000;
 	};
 
+	// UI icon textures
 	struct UIIcon
 	{
 		ID3D11ShaderResourceView* texture = nullptr;
@@ -227,17 +234,19 @@ public:
 		UIIcon loadSettings;
 		UIIcon deleteSettings;
 		UIIcon clearCache;
-		UIIcon logo;
-		UIIcon search;
-		UIIcon featureSettingRevert;
-		UIIcon applyToGame;
-		UIIcon pauseTime;
-		UIIcon undo;
-		UIIcon freeCamera;
-		UIIcon playMode;
+		UIIcon logo;                  // New logo icon
+		UIIcon search;                // Search icon for search bars
+		UIIcon featureSettingRevert;  // Feature revert settings icon
+		UIIcon applyToGame;           // Apply changes to game icon (CS editor)
+		UIIcon pauseTime;             // Pause time icon (CS editor)
+		UIIcon undo;                  // Undo icon (CS editor)
+		UIIcon freeCamera;            // Free camera preview icon (CS editor)
+		UIIcon playMode;              // Play mode preview icon (CS editor)
 
+		// Social media/external link icons
 		UIIcon discord;
 
+		// Category icons
 		UIIcon characters;
 		UIIcon display;
 		UIIcon grass;
@@ -434,7 +443,7 @@ public:
 	/** @brief Gets the built-in default font role settings for the given role */
 	static const ThemeSettings::FontRoleSettings& GetDefaultFontRole(FontRole role);
 
-	/** @brief Serializes the full ImGui color palette as a named color map (resilient to enum reordering) */
+	// Named-map palette serialization (resilient to ImGui enum changes)
 	static void PaletteToJson(json& themeJson, const std::array<ImVec4, ImGuiCol_COUNT>& palette);
 	/** @brief Deserializes palette from named color map or legacy positional array */
 	static void PaletteFromJson(const json& themeJson, std::array<ImVec4, ImGuiCol_COUNT>& palette);
@@ -481,11 +490,12 @@ public:
 
 	/** @brief Queues a feature to be selected in the left panel on the next frame */
 	void SelectFeatureMenu(const std::string& featureName);
-	static std::unordered_map<std::string, int> categoryCounts;
+	static std::unordered_map<std::string, int> categoryCounts;  // Number of features in each feature category
 
 	bool overlayVisible = false;
 
 public:
+	// Move KeyEvent struct here
 	class CharEvent : public RE::InputEvent
 	{
 	public:
@@ -512,7 +522,7 @@ public:
 			thumbstickY(0.0f) {}
 
 		explicit KeyEvent(const RE::ThumbstickEvent* a_event) :
-			keyCode(0),
+			keyCode(0),  // For thumbstick events, keyCode/value are replaced by x/y floats
 			device(a_event->GetDevice()),
 			eventType(a_event->GetEventType()),
 			value(0),
@@ -520,6 +530,7 @@ public:
 			thumbstickX(a_event->xValue),
 			thumbstickY(a_event->yValue)
 		{}
+		// For thumbstick events, keyCode/value are replaced by x/y floats
 		uint32_t keyCode;
 		RE::INPUT_DEVICE device;
 		RE::INPUT_EVENT_TYPE eventType;
@@ -537,10 +548,12 @@ public:
 private:
 	Settings settings;
 
-	std::string cachedIniPath;  // io.IniFilename must point to a string that outlives the ImGui context
+	std::string cachedIniPath;  // io.IniFilename must point to a string that lives for the duration of the runtime
 
-	std::string pendingFeatureSelection;
+	// Menu navigation
+	std::string pendingFeatureSelection;  // Feature to select on next frame
 
+	// Input event handling
 	std::vector<KeyEvent> _keyEventQueue;
 	mutable std::shared_mutex _inputEventMutex;
 

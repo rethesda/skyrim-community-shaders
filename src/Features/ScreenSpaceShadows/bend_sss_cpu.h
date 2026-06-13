@@ -51,6 +51,7 @@ namespace Bend
 		int DispatchCount;         // Number of compute dispatches written to the list
 	};
 
+	// Helper functions
 	inline int bend_min(const int a, const int b) { return a > b ? b : a; }
 	inline int bend_max(const int a, const int b) { return a > b ? a : b; }
 

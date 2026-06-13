@@ -17,6 +17,7 @@ void TerrainVariation::DrawSettings()
 	bool oldEnabled = settings.enableTilingFix;
 	ImGui::Checkbox(T(TKEY("enable_tiling_fix"), "Enable Terrain Tiling Fix"), (bool*)&settings.enableTilingFix);
 	if (oldEnabled != (bool)settings.enableTilingFix) {
+		// Update the shader settings when the checkbox is toggled
 		UpdateShaderSettings();
 		logger::info("TerrainVariation setting changed to: {}", settings.enableTilingFix);
 	}

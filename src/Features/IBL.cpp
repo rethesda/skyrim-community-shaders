@@ -194,6 +194,7 @@ void IBL::ReflectionsPrepass()
 
 		bool interiorDisabled = settings.DisableInInteriors && Util::IsInterior();
 
+		// Set PS shader resource
 		{
 			std::array<ID3D11ShaderResourceView*, 4> srvs = {
 				interiorDisabled ? nullptr : envIBLTexture->srv.get(),
@@ -217,6 +218,7 @@ void IBL::Prepass()
 
 	auto& envTexture = dynamicCubemaps.envTexture;
 
+	// Unset PS shader resource
 	{
 		ID3D11ShaderResourceView* views[2]{ nullptr, nullptr };
 		context->PSSetShaderResources(76, 2, views);
@@ -269,6 +271,7 @@ void IBL::Prepass()
 		context->CSSetShader(nullptr, nullptr, 0);
 	}
 
+	// Set PS shader resource
 	{
 		ID3D11ShaderResourceView* views[2]{ envIBLTexture->srv.get(), skyIBLTexture->srv.get() };
 		context->PSSetShaderResources(76, 2, views);

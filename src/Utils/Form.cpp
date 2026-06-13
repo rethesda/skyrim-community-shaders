@@ -8,6 +8,7 @@ Util::SpidComponents Util::ParseSpid(const std::string& spid)
 	if (tildePos != std::string::npos)
 		result.pluginName = spid.substr(tildePos + 1);
 
+	// Strip 0x/0X prefix
 	if (hexPart.size() > 2 && hexPart[0] == '0' && (hexPart[1] == 'x' || hexPart[1] == 'X'))
 		hexPart = hexPart.substr(2);
 
@@ -47,10 +48,12 @@ RE::FormID Util::SpidToFormId(const std::string& spid)
 		return 0;
 	}
 
+	// Primary: CommonLibSSE-NG's LookupForm
 	auto* form = handler->LookupForm(components.localFormId, components.pluginName);
 	if (form)
 		return form->GetFormID();
 
+	// Fallback: reconstruct full FormID from compile indices
 	auto* file = handler->LookupModByName(components.pluginName);
 	if (!file) {
 		logger::warn("[FormIdentity] SpidToFormId: plugin '{}' not found in load order", components.pluginName);
@@ -97,6 +100,7 @@ std::string Util::GetFormEditorID(const RE::TESForm* form)
 	if (editorId && editorId[0] != '\0')
 		return std::string(editorId);
 
+	// Search the global EditorID map as fallback
 	auto [map, lock] = RE::TESForm::GetAllFormsByEditorID();
 	if (map) {
 		RE::BSReadLockGuard locker(lock);

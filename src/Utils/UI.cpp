@@ -95,6 +95,7 @@ namespace Util
 		if (hovered) {
 			ImGui::BeginTooltip();
 			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+			// Apply Subtext font for consistent tooltip styling
 			if (auto* menu = globals::menu) {
 				if (auto* subtextFont = menu->GetFont(Menu::FontRole::Subtext)) {
 					previousFont = ImGui::GetFont();
@@ -245,6 +246,7 @@ namespace Util
 	static bool showClearCacheConfirmation = false;
 	static bool dontAskAgainCheckbox = false;
 
+	// Helper function to perform the actual cache clearing
 	static void PerformClearShaderCache()
 	{
 		auto* shaderCache = globals::shaderCache;
@@ -262,11 +264,13 @@ namespace Util
 		if (!menu)
 			return;
 
+		// If user has opted to skip confirmation, clear immediately
 		if (menu->GetSettings().SkipClearCacheConfirmation) {
 			PerformClearShaderCache();
 			return;
 		}
 
+		// Show confirmation popup
 		showClearCacheConfirmation = true;
 		dontAskAgainCheckbox = false;
 	}
@@ -295,6 +299,7 @@ namespace Util
 
 			ImGui::Spacing();
 
+			// Center buttons
 			constexpr float buttonWidth = ThemeManager::Constants::POPUP_BUTTON_WIDTH;
 			const float spacing = ImGui::GetStyle().ItemSpacing.x;
 			const float totalWidth = buttonWidth * 2 + spacing;

@@ -28,6 +28,7 @@ public:
 		for (auto& v : smoothFrameTimePerType) v = 0.0f;
 		for (auto& v : enabledClasses) v = true;
 
+		// Initialize QueryPerformanceCounter frequency
 		frameTimingFrequency.QuadPart = 0;
 		frameStartTime.QuadPart = 0;
 	}
@@ -60,9 +61,11 @@ public:
 	double smoothDrawCalls[RE::BSShader::Type::Total + 1];
 	int drawCalls[RE::BSShader::Type::Total + 1];
 
+	// Frame time tracking per shader type (in milliseconds)
 	float frameTimePerType[RE::BSShader::Type::Total + 1];      ///< Per-type frame time in milliseconds.
 	float smoothFrameTimePerType[RE::BSShader::Type::Total + 1]; ///< EMA-smoothed per-type frame time in milliseconds.
 
+	// Timing state for per-type frame time tracking using QueryPerformanceCounter
 	LARGE_INTEGER frameTimingFrequency;
 	LARGE_INTEGER frameStartTime;
 	bool frameTimingActive = false;
@@ -331,7 +334,7 @@ public:
 	// Skyrim constants
 	D3D_FEATURE_LEVEL featureLevel;
 
-	TracyD3D11Ctx tracyCtx = nullptr;
+	TracyD3D11Ctx tracyCtx = nullptr;  // Tracy context
 
 	// Moon and Stars mod detection
 	inline static bool moonAndStarsLoaded = false;

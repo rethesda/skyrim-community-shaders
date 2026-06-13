@@ -49,6 +49,7 @@
 
 void Feature::Load(json& o_json)
 {
+	// Convert string to wstring
 	auto ini_filename = std::format("{}.ini", GetShortName());
 	std::wstring ini_filename_w;
 	std::ranges::copy(ini_filename, std::back_inserter(ini_filename_w));
@@ -78,6 +79,7 @@ void Feature::Load(json& o_json)
 		try {
 			REL::Version featureVersion(std::regex_replace(value, std::regex("-"), "."));
 
+			// Check if feature exists in minimal versions
 			REL::Version minimalFeatureVersion;
 			if (!Feature::IsFeatureKnown(GetShortName(), &minimalFeatureVersion)) {
 				hasError = true;
@@ -85,6 +87,7 @@ void Feature::Load(json& o_json)
 				errorType = FeatureIssues::FeatureIssueInfo::IssueType::UNKNOWN;
 				failedLoadedMessage = std::format("{} {} is an unknown feature not supported by this CS version. This may be a feature from a development branch.", GetShortName(), value);
 			} else {
+				// Version compatibility check
 				bool oldFeature = featureVersion.compare(minimalFeatureVersion) == std::strong_ordering::less;
 				bool majorVersionMismatch = featureVersion.major() < minimalFeatureVersion.major();
 
@@ -120,6 +123,7 @@ void Feature::Load(json& o_json)
 		errorVersion = "unknown";
 		errorType = FeatureIssues::FeatureIssueInfo::IssueType::VERSION_MISMATCH;
 
+		// Get the minimum required version to include in the error message
 		std::string requiredVersion = Feature::GetFeatureRequiredVersion(GetShortName());
 
 		failedLoadedMessage = std::format("The {} file is missing. This feature is not installed! Version required: {}", ini_filename, requiredVersion);
@@ -276,7 +280,7 @@ bool Feature::ToggleAtBootSetting()
 	auto disabled = state->IsFeatureDisabled(featureName);
 	state->SetFeatureDisabled(featureName, !disabled);
 
-	return state->IsFeatureDisabled(featureName);
+	return state->IsFeatureDisabled(featureName);  // Return the new state
 }
 
 bool Feature::ReapplyOverrideSettings()
@@ -288,14 +292,18 @@ bool Feature::ReapplyOverrideSettings()
 		return false;
 	}
 
+	// Delete user override file to restore original override behavior
 	overrideManager->DeleteUserOverride(featureName);
 
+	// Get base settings and apply overrides fresh
 	json featureJson;
 	SaveSettings(featureJson);
 
+	// Apply overrides to the settings (without user customizations)
 	size_t appliedCount = overrideManager->ReapplyFeatureOverrides(featureName, featureJson);
 
 	if (appliedCount > 0) {
+		// Load the override settings back into the feature
 		LoadSettings(featureJson);
 		return true;
 	}
@@ -332,7 +340,9 @@ std::string Feature::GetDisplayCategory() const
 
 void Feature::DrawUnloadedUI()
 {
+	// Prioritize detailed failure message if available
 	if (!failedLoadedMessage.empty()) {
+		// Use error color for all failure messages
 		auto& themeSettings = Menu::GetSingleton()->GetTheme();
 		ImGui::TextColored(themeSettings.StatusPalette.Error, failedLoadedMessage.c_str());
 		return;
@@ -341,11 +351,13 @@ void Feature::DrawUnloadedUI()
 	// Fallback: Always show missing file message when no specific failure message exists
 	auto& themeSettings = Menu::GetSingleton()->GetTheme();
 	auto ini_filename = std::format("{}.ini", GetShortName());
+	// Get the minimum required version to include in the error message
 	std::string requiredVersion = Feature::GetFeatureRequiredVersion(GetShortName());
 
 	auto missingFileMessage = std::format("The {} file is missing. This feature is not installed! Version required: {}", ini_filename, requiredVersion);
 	ImGui::TextColored(themeSettings.StatusPalette.Error, missingFileMessage.c_str());
 
+	// Also show feature summary if available
 	auto [description, keyFeatures] = GetFeatureSummary();
 	if (!description.empty()) {
 		ImGui::Spacing();

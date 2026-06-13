@@ -11,16 +11,18 @@
 
 struct Feature
 {
+	// For global settings search
 	struct SettingSearchEntry
 	{
 		std::string label;
 		std::string description;
-		std::function<void()> focusCallback;
-		std::string featureName;
+		std::function<void()> focusCallback;  // Called to focus/highlight this setting in the UI
+		std::string featureName;              // For display context
 	};
-
+	// Override in features to expose settings for search
 	virtual std::vector<SettingSearchEntry> GetSettingsSearchEntries() { return {}; }
 
+	// Nexus Mods base URL for Skyrim Special Edition
 	static constexpr std::string_view NEXUS_BASE_URL = "https://www.nexusmods.com/skyrimspecialedition/mods/";
 	bool loaded = false;
 	std::string version;
@@ -169,6 +171,7 @@ public:
 		std::string sectionName;             // Display name for the collapsible section (empty = no weather analysis)
 		std::function<void()> drawFunction;  // Custom draw function for weather analysis content
 
+		// Constructor for easy initialization
 		WeatherAnalysisConfig() = default;
 		WeatherAnalysisConfig(const std::string& name, std::function<void()> drawFunc) :
 			sectionName(name), drawFunction(std::move(drawFunc)) {}
@@ -234,6 +237,7 @@ public:
 	 */
 	static std::vector<std::string> GetLoadedFeatureNames();
 
+	// Feature utility functions
 	/**
 	 * @brief Gets the minimum required version for a feature as a formatted string.
 	 * @param shortName The short name of the feature.

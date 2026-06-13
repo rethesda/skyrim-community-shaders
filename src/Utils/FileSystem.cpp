@@ -7,11 +7,13 @@
 
 namespace Util
 {
+	// Path helper utilities implementation
 	namespace PathHelpers
 	{
 		std::filesystem::path GetDataPath()
 		{
 			try {
+				// Get the current process (game) executable path
 				wchar_t buffer[MAX_PATH];
 				DWORD length = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
 				if (length == 0 || length == MAX_PATH) {
@@ -24,6 +26,7 @@ namespace Util
 				auto dataPath = gamePath / "Data";
 				return dataPath;
 			} catch (const std::exception& e) {
+				// Fallback to current_path if Windows API method fails
 				logger::warn("Failed to get game path via Windows API, falling back to current_path: {}", e.what());
 				return std::filesystem::current_path() / "Data";
 			}
@@ -202,6 +205,7 @@ namespace Util
 		}
 	}
 
+	// File system utilities implementation
 	namespace FileHelpers
 	{
 		DeletionResult SafeDelete(const std::string& path, const std::string& description)
@@ -242,6 +246,7 @@ namespace Util
 
 		std::string SanitizeFileName(std::string name)
 		{
+			// Trim
 			constexpr std::string_view trimLeadingChars = " \t\r\n\v\f-";
 			auto first = name.find_first_not_of(trimLeadingChars);
 			if (first == std::string::npos)
@@ -252,6 +257,7 @@ namespace Util
 				last = first;
 			name = name.substr(first, last - first + 1);
 
+			// Replace invalid characters
 			std::replace_if(name.begin(), name.end(), [](char c) {
 				auto u = static_cast<unsigned char>(c);
 				// Only perform "illegal" checks if it's a standard ASCII character (0-127)
@@ -276,6 +282,7 @@ namespace Util
 				}
 			}
 
+			// Limit length
 			if (name.length() > 255u) {
 				name = name.substr(0, 255u);
 			}
@@ -302,6 +309,7 @@ std::vector<SettingsDiffEntry> Util::FileSystem::DiffJson(const nlohmann::json& 
 					auto aJson = userJson.at(nlohmann::json::json_pointer(path));
 					auto bJson = testJson.at(nlohmann::json::json_pointer(path));
 
+					// If both values are numbers, check if difference is within epsilon (double precision)
 					if (aJson.is_number() && bJson.is_number()) {
 						double aDouble = aJson.get<double>();
 						double bDouble = bJson.get<double>();
@@ -380,6 +388,7 @@ std::vector<SettingsDiffEntry> Util::FileSystem::LoadJsonDiff(const std::filesys
 			return diffEntries;
 		}
 
+		// Use shared diffing logic
 		return DiffJson(userJson, testJson, epsilon);
 	} catch (const std::exception& e) {
 		logger::warn("Failed to load JSON diff from '{}' and '{}': {}", userPath.string(), testPath.string(), e.what());

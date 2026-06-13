@@ -166,6 +166,7 @@ public:
 	/** @brief Returns the currently locked weather form, or nullptr if none. */
 	RE::TESWeather* GetLockedWeather() const { return lockedWeather; }
 
+	// Time controls
 	/** @brief Pause in-game time by setting the timescale to zero. */
 	void PauseTime();
 

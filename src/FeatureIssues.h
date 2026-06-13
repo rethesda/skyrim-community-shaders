@@ -14,16 +14,17 @@ namespace FeatureIssues
 	 */
 	struct FeatureFileInfo
 	{
-		std::string featureName;
-		std::string deployedFolderPath;      ///< Data/Shaders/FeatureName/
-		std::string iniPath;                 ///< Data/Shaders/Features/FeatureName.ini
-		std::vector<std::string> hlslFiles;
-		bool hasDeployedFolder{ false };
-		bool hasINI{ false };
+		std::string featureName;             // Short name of the feature
+		std::string deployedFolderPath;      // Path to deployed shader folder (Data/Shaders/FeatureName/)
+		std::string iniPath;                 // Path to the INI file (Data/Shaders/Features/FeatureName.ini)
+		std::vector<std::string> hlslFiles;  // List of HLSL files for this feature
+		bool hasDeployedFolder{ false };     // Whether the deployed shader folder exists
+		bool hasINI{ false };                // Whether INI file exists in deployed location
 
-		std::filesystem::file_time_type latestTimestamp;
-		std::string latestTimestampFile;
-		std::string timestampDisplay;
+		// Timestamp information for file tracking
+		std::filesystem::file_time_type latestTimestamp;  // Latest modification time across all files
+		std::string latestTimestampFile;                  // Path to the file with the latest timestamp
+		std::string timestampDisplay;                     // Human-readable timestamp string
 	};
 
 	/**
@@ -31,23 +32,24 @@ namespace FeatureIssues
 	 */
 	struct FeatureIssueInfo
 	{
-		std::string shortName;
-		std::string displayName;
-		std::string version;
-		std::string iniPath;
-		std::string rejectionReason;
-		std::string replacementFeature;
-		std::string userMessage;
-		REL::Version removedInVersion;
-		bool modifiedShaderDirectory{ false };  ///< Whether this feature modified package/Shaders/ directly
-		FeatureFileInfo fileInfo;
+		std::string shortName;                  // Short name of the feature
+		std::string displayName;                // Display name of the feature (empty if unknown)
+		std::string version;                    // Version found in INI (if any)
+		std::string iniPath;                    // Full path to the INI file
+		std::string rejectionReason;            // Why it was rejected/obsolete
+		std::string replacementFeature;         // What feature replaced it (short name)
+		std::string userMessage;                // Guidance message for user
+		REL::Version removedInVersion;          // CS version when it was removed (for obsolete features)
+		bool modifiedShaderDirectory{ false };  // Whether this obsolete feature modified package/Shaders/ directly
+		FeatureFileInfo fileInfo;               // Detailed file information
 
-		std::string minimumVersionRequired;
+		// Version mismatch specific information
+		std::string minimumVersionRequired;  // For version mismatch issues, the minimum version required
 
-		/** Cached replacement feature info, populated when issue is added via AddFeatureIssue. */
-		std::string replacementFeatureDisplayName;
-		bool replacementFeatureInstalled{ false };
-		std::string replacementFeatureModLink;
+		// Cached replacement feature information (populated when issue is added)
+		std::string replacementFeatureDisplayName;  // Friendly name of replacement feature
+		bool replacementFeatureInstalled{ false };  // Whether replacement is installed and loaded
+		std::string replacementFeatureModLink;      // Download link for replacement (if available)
 
 		enum class IssueType
 		{
@@ -59,6 +61,7 @@ namespace FeatureIssues
 
 		IssueType issueType{ IssueType::UNKNOWN };
 
+		// Helper methods
 		/** @brief Checks if issue type is OBSOLETE. */
 		bool IsObsolete() const { return issueType == IssueType::OBSOLETE; }
 		/** @brief Checks if issue type is VERSION_MISMATCH. */
@@ -192,16 +195,15 @@ namespace FeatureIssues
 		 */
 		struct TestIniInfo
 		{
-			std::string testIniPath;
-			bool isNewFile{ true };
-			std::string testType;         ///< "obsolete", "unknown", or "version mismatch"
-			std::string featureName;
-			std::string originalVersion;  ///< Saved for restore; "none" if INI was newly created
+			std::string testIniPath;      // Path to the test INI file created
+			bool isNewFile{ true };       // Whether this is a completely new file or modified existing
+			std::string testType;         // Description of test type (obsolete, unknown, version mismatch)
+			std::string featureName;      // Name of the feature being tested
+			std::string originalVersion;  // Original version string (for version mismatch tests)
 
-			/** @brief Checks if the test INI file still exists on disk. */
-			bool stillExists() const;
-			/** @brief Checks if the user manually deleted the test INI file. */
-			bool wasManuallyDeleted() const;
+			// Status tracking for cross-restart functionality
+			bool stillExists() const;         // Check if test INI still exists
+			bool wasManuallyDeleted() const;  // Check if user manually deleted the test INI
 		};
 
 		/**

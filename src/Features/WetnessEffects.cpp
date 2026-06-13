@@ -344,6 +344,7 @@ namespace Ripples
 	{
 		static void thunk(RE::TESWaterSystem* a_waterSystem, bool a_enabled, float a_fadeAmount)
 		{
+			// Apply our logic only if wetness effects are enabled
 			if (s_isEnabled) {
 				a_enabled = a_enabled && s_vanillaRipplesEnabled;
 			}
@@ -821,6 +822,7 @@ void WetnessEffects::ApplyClimatePreset(ClimatePreset preset)
 {
 	const auto& climate = GetClimateSettings(preset);
 
+	// Update the climate preset
 	climatePreset = preset;
 
 	// Set settings to preset base values instead of multiplying existing values
@@ -831,6 +833,7 @@ void WetnessEffects::ApplyClimatePreset(ClimatePreset preset)
 	settings.MaxPuddleWetness = defaultSettings.MaxPuddleWetness * climate.puddleMultiplier;
 	settings.WeatherTransitionSpeed = defaultSettings.WeatherTransitionSpeed * climate.transitionSpeed;
 
+	// Use the preset's raindrop chance, grid size, and interval as the base values
 	settings.RaindropChance = climate.raindropChance;
 	settings.RaindropGridSize = climate.raindropGridSize;
 	settings.RaindropInterval = climate.raindropInterval;
@@ -864,6 +867,7 @@ WetnessEffects::PerFrame WetnessEffects::GetCommonBufferData() const
 						}
 					}
 
+					// Extract rain intensities using helper function to avoid code duplication
 					float currentRaining = 0.0f;
 					float lastRaining = 0.0f;
 
@@ -982,6 +986,7 @@ void WetnessEffects::RestoreDefaultSettings()
 
 void WetnessEffects::DrawWeatherAnalysis() const
 {
+	// Only show rain system analysis when it's raining and wetness effects are enabled
 	if (!settings.EnableWetnessEffects)
 		return;
 
@@ -989,13 +994,16 @@ void WetnessEffects::DrawWeatherAnalysis() const
 	if (!sky || sky->mode.get() != RE::Sky::Mode::kFull || !sky->IsRaining())
 		return;
 
+	// Get the current frame data (reuses already calculated values)
 	auto frameData = GetCommonBufferData();
 
+	// Get weather particle density for precipitation calculations
 	float weatherMaxParticleDensity = 0.0f;
 	if (sky->currentWeather && sky->currentWeather->precipitationData) {
 		weatherMaxParticleDensity = sky->currentWeather->precipitationData->GetSettingValue(RE::BGSShaderParticleGeometryData::DataID::kParticleDensity).f;
 	}
 
+	// Check last weather if transitioning
 	if (weatherMaxParticleDensity <= 0.0f && sky->lastWeather && sky->lastWeather->precipitationData) {
 		weatherMaxParticleDensity = sky->lastWeather->precipitationData->GetSettingValue(RE::BGSShaderParticleGeometryData::DataID::kParticleDensity).f;
 	}

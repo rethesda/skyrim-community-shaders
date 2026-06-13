@@ -206,6 +206,7 @@ void EditorWindow::ShowObjectsWindow()
 		m_previousSelectedCategory = m_selectedCategory;
 	}
 
+	// Create a table with two columns
 	if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInner)) {
 		// Fixed categories column, objects column fills remaining width
 		const float categoriesWidth = 180.0f * Util::GetUIScale();
@@ -217,6 +218,7 @@ void EditorWindow::ShowObjectsWindow()
 		if (resetLayout)
 			ImGui::TableSetColumnWidth(0, categoriesWidth);
 
+		// Left column: Categories
 		ImGui::TableSetColumnIndex(0);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
@@ -245,6 +247,7 @@ void EditorWindow::ShowObjectsWindow()
 				{ "Light Editor", T(TKEY("category_lighting_editor"), "Light Editor") }
 			};
 			for (int i = 0; i < IM_ARRAYSIZE(categories); ++i) {
+				// Highlight the selected category
 				if (ImGui::Selectable(categories[i].label, m_selectedCategory == categories[i].id)) {
 					m_selectedCategory = categories[i].id;  // Keep the stable English ID internally
 				}
@@ -254,6 +257,7 @@ void EditorWindow::ShowObjectsWindow()
 		ImGui::PopStyleVar();
 		ImGui::PopStyleColor();
 
+		// Right column: Objects
 		ImGui::TableSetColumnIndex(1);
 
 		if (ImGui::BeginChild("##ObjectsContent", { 0, 0 }, ImGuiChildFlags_Borders, kStickyHeaderFlags)) {
@@ -436,6 +440,7 @@ void EditorWindow::ShowObjectsWindow()
 				ImGui::Spacing();
 			}
 
+			// Handle Ctrl+F to focus search bar
 			if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
 				if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_F, false)) {
 					ImGui::SetKeyboardFocusHere();
@@ -524,6 +529,7 @@ void EditorWindow::ShowObjectsWindow()
 				}
 			}
 
+			// Scrollable area for the object table
 			BeginScrollableContent("##ObjectsScrollable");
 
 			// Stable user IDs for sortable columns — used instead of ColumnIndex so reordering/insertion won't break sorting.
@@ -548,6 +554,7 @@ void EditorWindow::ShowObjectsWindow()
 
 				ImGui::TableHeadersRow();
 
+				// Handle column sorting
 				if (ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs()) {
 					if (sortSpecs->SpecsDirty) {
 						if (sortSpecs->SpecsCount > 0) {
@@ -580,7 +587,9 @@ void EditorWindow::ShowObjectsWindow()
 					}
 				}
 
+				// Display objects based on the selected category
 				const auto& widgets = getWidgetsForCategory(m_selectedCategory);
+				// Sort widgets based on current sort column
 				std::vector<Widget*> sortedWidgets;
 				sortedWidgets.reserve(widgets.size());
 				for (const auto& w : widgets) {
@@ -658,6 +667,7 @@ void EditorWindow::ShowObjectsWindow()
 							ImGui::Dummy(ImVec2(ImGui::GetFrameHeight(), ImGui::GetFrameHeight()));
 							ImGui::TableNextColumn();
 
+							// Display current cell name
 							const char* cellName = cell->GetName();
 							std::string displayName = cellName && cellName[0] ? cellName : "[Unnamed Cell]";
 							std::string label = displayName;
@@ -683,27 +693,32 @@ void EditorWindow::ShowObjectsWindow()
 								}
 							}
 
+							// Enter key to open
 							if (isOpen && ImGui::IsKeyPressed(ImGuiKey_Enter)) {
 								if (currentCellLightingWidget && currentCellLightingWidget->cell == cell) {
 									currentCellLightingWidget->SetOpen(true);
 								}
 							}
 
+							// Form ID column
 							ImGui::TableNextColumn();
 							ImGui::Text("0x%08X", cell->GetFormID());
 
+							// File column
 							ImGui::TableNextColumn();
 							auto file = cell->GetFile(0);
 							if (file) {
 								ImGui::Text("%s", file->fileName);
 							}
 
+							// Status column
 							ImGui::TableNextColumn();
 							ImGui::Text("%s", T(TKEY("interior_cell"), "Interior Cell"));
 
 							// json column (empty for cells - no standalone json)
 							ImGui::TableNextColumn();
 						} else {
+							// Show message that cell lighting is only for interior cells
 							ImGui::TableNextRow();
 							ImGui::TableSetColumnIndex(1);
 							ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
@@ -712,6 +727,7 @@ void EditorWindow::ShowObjectsWindow()
 							ImGui::PopTextWrapPos();
 						}
 					} else {
+						// No player or cell
 						ImGui::TableNextRow();
 						ImGui::TableSetColumnIndex(1);
 						ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
@@ -731,6 +747,7 @@ void EditorWindow::ShowObjectsWindow()
 					return true;
 				};
 
+				// Filtered display of widgets
 				for (int i = 0; i < sortedWidgets.size(); ++i) {
 					if (!shouldShowWidget(sortedWidgets[i]))
 						continue;
@@ -740,6 +757,7 @@ void EditorWindow::ShowObjectsWindow()
 					ImGui::PushID(sortedWidgets[i]->GetFormID().c_str());
 					ImGui::TableNextRow();
 
+					// Set background colour
 					if (markedRecord != settings.markedRecords.end()) {
 						auto& color = settings.recordMarkers[markedRecord->second];
 						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::ColorConvertFloat4ToU32(color));
@@ -748,12 +766,14 @@ void EditorWindow::ShowObjectsWindow()
 
 					ImGui::TableSetColumnIndex(0);
 
+					// Favorite star
 					if (IconButton(std::format("##fav_{}", i).c_str(), IsFavorite(sortedWidgets[i]->GetEditorID()), "star")) {
 						ToggleFavorite(sortedWidgets[i]->GetEditorID());
 					}
 
 					ImGui::TableNextColumn();
 
+					// Editor ID column
 					bool isSelected = sortedWidgets[i]->IsOpen();
 					if (Util::TableRowSelectable(editorLabel.c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowOverlap)) {
 						if (ImGui::IsMouseDoubleClicked(0)) {
@@ -762,6 +782,7 @@ void EditorWindow::ShowObjectsWindow()
 						}
 					}
 
+					// Show ImageSpace and VolumetricLighting info for weather widgets
 					if (!weatherTooltipShownThisFrame && m_selectedCategory == "Weather" && ImGui::IsItemHovered()) {
 						auto* weatherWidget = dynamic_cast<WeatherWidget*>(sortedWidgets[i]);
 						if (weatherWidget && weatherWidget->weather) {
@@ -795,11 +816,13 @@ void EditorWindow::ShowObjectsWindow()
 						}
 					}
 
+					// Enter key to open
 					if (isSelected && ImGui::IsKeyPressed(ImGuiKey_Enter)) {
 						sortedWidgets[i]->SetOpen(true);
 						AddToRecent(sortedWidgets[i]->GetEditorID(), m_selectedCategory);
 					}
 
+					// Opens a context menu on right click to mark records by color
 					if (ImGui::BeginPopupContextItem(std::format("widget_context_menu##{}", sortedWidgets[i]->GetFormID()).c_str(), ImGuiPopupFlags_MouseButtonRight)) {
 						auto& markedRecords = settings.markedRecords;
 
@@ -818,12 +841,15 @@ void EditorWindow::ShowObjectsWindow()
 						ImGui::EndPopup();
 					}
 
+					// Form ID column
 					ImGui::TableNextColumn();
 					ImGui::Text(sortedWidgets[i]->GetFormID().c_str());
 
+					// File column
 					ImGui::TableNextColumn();
 					ImGui::Text(sortedWidgets[i]->GetFilename().c_str());
 
+					// Status column
 					ImGui::TableNextColumn();
 
 					// Re-check if the record exists after potential removal

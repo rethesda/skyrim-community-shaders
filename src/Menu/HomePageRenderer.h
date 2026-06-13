@@ -38,6 +38,7 @@ public:
 	/** @brief Renders the full Home page including welcome, quick links, constraints, and FAQ sections. */
 	static void RenderHomePage();
 
+	// First-time setup management
 	/** @brief Returns true if the first-time setup dialog should be displayed to the user. */
 	static bool ShouldShowFirstTimeSetup();
 

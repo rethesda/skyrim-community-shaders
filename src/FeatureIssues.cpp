@@ -147,17 +147,20 @@ namespace FeatureIssues
 		std::filesystem::path deployedIniPath = Util::PathHelpers::GetFeatureIniPath(featureName);
 		std::filesystem::path deployedShaderDir = Util::PathHelpers::GetFeatureShaderPath(featureName);
 
+		// Check for deployed INI file
 		if (std::filesystem::exists(deployedIniPath)) {
 			info.hasINI = true;
 			info.iniPath = deployedIniPath.string();
 			updateTimestamp(deployedIniPath);
 		}
 
+		// Check for deployed shader directory and HLSL files
 		if (std::filesystem::exists(deployedShaderDir)) {
 			info.hasDeployedFolder = true;
 			info.deployedFolderPath = deployedShaderDir.string();
 			updateTimestamp(deployedShaderDir);
 
+			// Scan for HLSL files in deployed location
 			try {
 				for (const auto& hlslEntry : std::filesystem::recursive_directory_iterator(deployedShaderDir)) {
 					if (hlslEntry.is_regular_file()) {
@@ -173,6 +176,7 @@ namespace FeatureIssues
 			}
 		}
 
+		// Convert timestamp to human-readable format
 		if (info.latestTimestamp != std::filesystem::file_time_type::min()) {
 			try {
 				auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
@@ -204,9 +208,10 @@ namespace FeatureIssues
 		issue.fileInfo = fileInfo;
 		issue.minimumVersionRequired = minimumVersionRequired;
 
-		// Promote UNKNOWN to OBSOLETE when the feature is in our known-obsolete registry
+		// Check if this "unknown" feature is actually a known obsolete feature
 		if (issueType == FeatureIssueInfo::IssueType::UNKNOWN) {
 			if (auto it = s_obsoleteFeatureData.find(shortName); it != s_obsoleteFeatureData.end()) {
+				// Convert to obsolete type and populate full info
 				issue.issueType = FeatureIssueInfo::IssueType::OBSOLETE;
 				issue.displayName = it->second.displayName;
 				issue.replacementFeature = it->second.replacementFeature;
@@ -215,6 +220,7 @@ namespace FeatureIssues
 				issue.rejectionReason = it->second.rejectionReason;
 				issue.modifiedShaderDirectory = it->second.modifiedShaderDirectory;
 
+				// Log with obsolete-specific information
 				logger::warn("Found obsolete feature INI: {} version {}", shortName, version);
 				logger::info("  Reason: {}", issue.rejectionReason);
 				if (!issue.replacementFeature.empty()) {
@@ -224,6 +230,7 @@ namespace FeatureIssues
 			}
 		}
 
+		// For explicitly obsolete features, populate additional info from our data
 		if (issueType == FeatureIssueInfo::IssueType::OBSOLETE) {
 			if (auto it = s_obsoleteFeatureData.find(shortName); it != s_obsoleteFeatureData.end()) {
 				issue.displayName = it->second.displayName;
@@ -234,6 +241,7 @@ namespace FeatureIssues
 			}
 		}
 
+		// Cache replacement feature information for efficient access (only if there's actually a replacement)
 		if (!issue.replacementFeature.empty()) {
 			Feature* replacementFeatureObj = s_featureLookupCache.FindFeature(issue.replacementFeature);
 			if (replacementFeatureObj) {
@@ -246,6 +254,7 @@ namespace FeatureIssues
 				issue.replacementFeatureModLink = "";
 			}
 		} else {
+			// For version mismatch features without replacement, cache the current feature's info for download links
 			if (issueType == FeatureIssueInfo::IssueType::VERSION_MISMATCH) {
 				Feature* featureObj = s_featureLookupCache.FindFeature(shortName);
 				if (featureObj) {
@@ -258,8 +267,10 @@ namespace FeatureIssues
 					issue.replacementFeatureModLink = "";
 				}
 			}
+			// For unknown features and obsolete without replacement, leave replacement fields empty
 		}
 
+		// Check for duplicates before adding
 		auto existingIssue = std::find_if(s_featureIssues.begin(), s_featureIssues.end(),
 			[&shortName](const FeatureIssueInfo& existing) {
 				return existing.shortName == shortName;

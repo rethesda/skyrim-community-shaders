@@ -120,10 +120,12 @@ namespace Util
 				return E_FAIL;
 			}
 
+			// Get filesize
 			file.seekg(0, std::ios::end);
 			UINT size = static_cast<UINT>(file.tellg());
 			file.seekg(0, std::ios::beg);
 
+			// Create buffer and read file
 			char* data = new char[size];
 			file.read(data, size);
 			*ppData = data;
@@ -145,6 +147,7 @@ namespace Util
 
 		CustomInclude include;
 
+		// Build defines (aka convert vector->D3DCONSTANT array)
 		std::vector<D3D_SHADER_MACRO> macros;
 		std::string str = Util::WStringToString(FilePath);
 
@@ -182,10 +185,12 @@ namespace Util
 		else
 			return nullptr;
 
+		// Add null terminating entry
 		macros.push_back({ "WINPC", "" });
 		macros.push_back({ "DX11", "" });
 		macros.push_back({ nullptr, nullptr });
 
+		// Compiler setup
 		uint32_t flags = !globals::state->IsDeveloperMode() ? (D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3) : D3DCOMPILE_DEBUG;
 		if (globals::state->enablePartialPrecision.load(std::memory_order_relaxed))
 			flags |= D3DCOMPILE_PARTIAL_PRECISION;
@@ -260,6 +265,7 @@ namespace Util
 			}
 		}
 
+		// Non-copyable, non-movable for simplicity
 			ScopedD3DMap(const ScopedD3DMap&) = delete;
 		ScopedD3DMap& operator=(const ScopedD3DMap&) = delete;
 
@@ -274,6 +280,7 @@ namespace Util
 		D3D11_MAPPED_SUBRESOURCE mappedResource_{};
 	};
 
+	// Helper function to validate highlight color components
 	bool ValidateHighlightColor(const std::array<float, 4>& color)
 	{
 		for (size_t i = 0; i < 4; ++i) {
@@ -289,11 +296,13 @@ namespace Util
 		if (!isHighlighted || !texture)
 			return;
 
+		// Validate input color values
 		if (!ValidateHighlightColor(highlightColor)) {
 			logger::error("ApplyHighlightTintToTexture: Invalid highlight color values. All components must be finite and in range [0.0, 1.0]");
 			return;
 		}
 
+		// Get texture description and validate dimensions
 		D3D11_TEXTURE2D_DESC desc;
 		texture->GetDesc(&desc);
 
@@ -306,7 +315,7 @@ namespace Util
 				logger::warn("ApplyHighlightTintToTexture: Processing large texture ({}x{} = {} pixels). Consider using compute shader for better performance. This warning will only be shown once.",
 					desc.Width, desc.Height, pixelCount);
 			});
-		}
+		}  // Create a temporary staging texture to read from
 		ID3D11Texture2D* stagingTexture = nullptr;
 		desc.Usage = D3D11_USAGE_STAGING;
 		desc.BindFlags = 0;
@@ -318,11 +327,14 @@ namespace Util
 			return;
 		}
 
+		// RAII wrapper ensures staging texture is always released
 		std::unique_ptr<ID3D11Texture2D, void (*)(ID3D11Texture2D*)> stagingGuard(
 			stagingTexture, [](ID3D11Texture2D* tex) { if (tex) tex->Release(); });
 
+		// Copy the original texture to staging
 		globals::d3d::context->CopyResource(stagingTexture, texture);
 
+		// Use RAII wrapper for mapping/unmapping
 		ScopedD3DMap scopedMap(globals::d3d::context, stagingTexture, 0, D3D11_MAP_READ_WRITE, 0);
 		if (!scopedMap.IsValid()) {
 			logger::error("ApplyHighlightTintToTexture: Failed to map staging texture");
@@ -335,6 +347,7 @@ namespace Util
 			return;
 		}
 
+		// Apply highlight tint to each pixel
 		uint8_t* pixels = static_cast<uint8_t*>(mapped->pData);
 		const float blendAlpha = highlightColor[3];
 
@@ -342,23 +355,33 @@ namespace Util
 			for (UINT x = 0; x < desc.Width; ++x) {
 				uint8_t* pixel = pixels + (y * mapped->RowPitch + x * 4);
 
+				// Only tint non-transparent pixels (alpha > 0)
 				if (pixel[3] > 0) {
+					// Apply configurable highlight tint
+					// Blend the original color with the highlight color
 					float originalR = pixel[0] / 255.0f;
 					float originalG = pixel[1] / 255.0f;
 					float originalB = pixel[2] / 255.0f;
 
+					// Blend: original * (1 - alpha) + highlight * alpha
 					pixel[0] = static_cast<uint8_t>((originalR * (1.0f - blendAlpha) + highlightColor[0] * blendAlpha) * 255.0f);
 					pixel[1] = static_cast<uint8_t>((originalG * (1.0f - blendAlpha) + highlightColor[1] * blendAlpha) * 255.0f);
 					pixel[2] = static_cast<uint8_t>((originalB * (1.0f - blendAlpha) + highlightColor[2] * blendAlpha) * 255.0f);
+					// Alpha stays the same
 				}
 			}
 		}
 
+		// ScopedD3DMap destructor will automatically unmap the resource
+		// Copy the modified texture back
 		globals::d3d::context->CopyResource(texture, stagingTexture);
+
+		// stagingGuard destructor will automatically release the staging texture
 	}
 
 	HRESULT CreateOverlayTextureAndRTV(ID3D11Device* device, int width, int height, ID3D11Texture2D** outTex, ID3D11RenderTargetView** outRTV)
 	{
+		// Input validation
 		if (!device) {
 			logger::error("CreateOverlayTextureAndRTV: device parameter is null");
 			return E_INVALIDARG;
@@ -374,6 +397,7 @@ namespace Util
 			return E_INVALIDARG;
 		}
 
+		// Initialize output parameters
 		*outTex = nullptr;
 		*outRTV = nullptr;
 
@@ -396,6 +420,7 @@ namespace Util
 		hr = device->CreateRenderTargetView(*outTex, nullptr, outRTV);
 		if (FAILED(hr)) {
 			logger::error("CreateOverlayTextureAndRTV: Failed to create render target view (HRESULT: 0x{:08X})", static_cast<uint32_t>(hr));
+			// Clean up the texture if RTV creation failed
 			if (*outTex) {
 				(*outTex)->Release();
 				*outTex = nullptr;
@@ -408,6 +433,7 @@ namespace Util
 
 	HRESULT SaveTextureToFile(ID3D11Device* device, ID3D11DeviceContext* context, const std::filesystem::path& path, ID3D11Texture2D* tex)
 	{
+		// Input validation
 		if (!device) {
 			logger::error("SaveTextureToFile: device parameter is null");
 			return E_INVALIDARG;
@@ -471,6 +497,7 @@ namespace Util
 
 	HRESULT LoadTextureFromFile(ID3D11Device* device, const std::filesystem::path& path, ID3D11Texture2D** outTex, ID3D11ShaderResourceView** outSRV)
 	{
+		// Input validation
 		if (!device) {
 			logger::error("LoadTextureFromFile: device parameter is null");
 			return E_INVALIDARG;
