@@ -15,20 +15,13 @@ private:
 	static constexpr std::string_view MOD_ID = "179371";
 
 public:
-	/** @brief Returns the internal name of this feature. */
 	virtual inline std::string GetName() override { return "HDR Display"; }
-	/** @brief Returns the localized display name for the UI. */
 	virtual std::string GetDisplayName() override { return T("feature.hdr_display.name", "HDR Display"); }
-	/** @brief Returns the short identifier used for file paths and settings keys. */
 	virtual inline std::string GetShortName() override { return "HDRDisplay"; }
-	/** @brief Returns the Nexus Mods URL for this feature. */
 	virtual inline std::string GetFeatureModLink() override { return MakeNexusModURL(MOD_ID); }
-	/** @brief Returns the category this feature belongs to. */
 	virtual inline std::string_view GetCategory() const override { return "Display"; }
-	/** @brief Returns false; this is not a core feature. */
 	virtual inline bool IsCore() const override { return false; }
 
-	/** @brief Returns the HLSL preprocessor define name for this feature. */
 	virtual inline std::string_view GetShaderDefineName() override { return "HDR_OUTPUT"; }
 	/** @brief Returns true for ImageSpace and Sky shader types. */
 	virtual inline bool HasShaderDefine(RE::BSShader::Type shaderType) override
@@ -117,6 +110,19 @@ public:
 	/** @brief Runs the HDR output compute shader to composite scene and UI, then copies to the back buffer. */
 	void ApplyHDR();
 
+	/** @brief Snapshots hdrTexture before the menu blur dirties it in place. */
+	void SnapshotCleanScene();
+
+	/** @brief Returns true when the snapshot was refreshed this frame; stale means hdrTexture wasn't blurred. */
+	bool IsCleanSceneCaptureFresh() const;
+
+	/** @brief Runs the HDR output transform on a clean scene (no UI buffer) and writes into outputTexture.
+	 *  @param sceneSRV The clean HDR scene SRV.
+	 *  @param sdrPreview If true, applies SDR preview transform instead of HDR output.
+	 *  @return The composed output texture.
+	 */
+	ID3D11Texture2D* ComposeCleanCapture(ID3D11ShaderResourceView* sceneSRV, bool sdrPreview);
+
 	/**
 	 * @brief Returns a patched blend state with corrected alpha blending for HDR UI compositing.
 	 * @param original The original blend state to potentially patch.
@@ -165,15 +171,24 @@ public:
 		float isSceneLinear;             ///< 1.0 = Linear Lighting active, scene already linear
 		float pad0;                      ///< 1.0 = main menu/loading screen active
 		float fgTweenMenuMidAlphaBoost;  ///< 1.0 = TweenMenu (pause) open — FG UIBrightnessCS mid-alpha boost only
+		float previewSDR;                ///< 1.0 = emit sRGB SDR (crop preview) instead of PQ HDR10
+		float pad1;
+		float pad2;
+		float pad3;
 	};
 
 	static_assert((sizeof(HDRDataCB) % 16) == 0, "CB size not padded correctly");
+
+	// HDR data CB contents from current settings/game state (previewSDR=0).
+	HDRDataCB BuildHDRData() const;
 
 	ConstantBuffer* hdrDataCB = nullptr;
 
 	Texture2D* hdrTexture = nullptr;
 	Texture2D* outputTexture = nullptr;
-	Texture2D* uiTexture = nullptr;  // Separate UI render target for proper compositing
+	Texture2D* uiTexture = nullptr;          // Separate UI render target for proper compositing
+	Texture2D* cleanSceneCapture = nullptr;  // Pre-blur copy of hdrTexture for clean captures
+	uint cleanSceneCaptureFrame = UINT32_MAX;  // frameCount when cleanSceneCapture was last refreshed
 
 	ID3D11ComputeShader* hdrOutputCS = nullptr;
 	/** @brief Returns the HDR output compute shader, compiling it on first use. */
@@ -244,6 +259,9 @@ private:
 	};
 
 	D3D12UIBufferMode GetD3D12UIBufferMode();
+
+	// Bind scene (t0), UI (t1, may be null), UAV (u0), CB (b0); dispatch the output CS; unbind.
+	void DispatchHDROutput(ID3D11ShaderResourceView* sceneSRV, ID3D11ShaderResourceView* uiSRV, ID3D11UnorderedAccessView* uav);
 
 	// True when FFX frame generation is actively compositing UI this frame.
 	bool IsFGCompositingThisFrame() const;
